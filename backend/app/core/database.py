@@ -1,9 +1,14 @@
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import settings
+
+
+class Base(DeclarativeBase):
+    pass
+
 
 # 主库引擎（租户元数据）
 master_engine = create_engine(
@@ -18,8 +23,6 @@ MasterSessionLocal = sessionmaker(
     autoflush=False,
     bind=master_engine,
 )
-
-Base = declarative_base()
 
 
 def get_master_db() -> Generator[Session, None, None]:
