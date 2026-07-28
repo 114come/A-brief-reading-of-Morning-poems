@@ -25,6 +25,18 @@ app.add_exception_handler(Exception, general_exception_handler)
 app.include_router(tenant_v1.router, prefix="/api/v1")
 
 
+@app.on_event("startup")
+def startup_event() -> None:
+    from app.core.database import MasterSessionLocal
+    from app.services.tenant.seed import seed_permissions
+
+    db = MasterSessionLocal()
+    try:
+        seed_permissions(db)
+    finally:
+        db.close()
+
+
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}

@@ -1,10 +1,10 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, Header
 from sqlalchemy.orm import Session
 
 from app.core.database import get_master_db
-from app.core.exceptions import UnauthorizedException
+from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.security import decode_token
 from app.services.tenant.models import User
 from app.services.tenant.repository import UserRepository
@@ -39,3 +39,16 @@ async def get_current_user(
 
 
 UserDep = Annotated[User, Depends(get_current_user)]
+
+
+def require_permission(permission_code: str) -> Any:
+    def checker(user: UserDep) -> User:
+        if user.is_superuser:
+            return user
+        user_permissions = {
+            p.code for role in user.roles for p in role.permissions
+        }
+        if permission_code not in user_permissions:
+            raise ForbiddenException(f"缺少权限: {permission_code}")
+        return user
+    return Depends(checker)

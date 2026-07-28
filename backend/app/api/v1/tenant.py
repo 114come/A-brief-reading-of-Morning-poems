@@ -5,11 +5,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.dependencies import DbDep
+from app.core.dependencies import DbDep, require_permission
 from app.core.exceptions import UnauthorizedException, ValidationException
 from app.core.response import UnifiedResponse
 from app.core.security import create_access_token
+from app.services.tenant.models import User
 from app.services.tenant.schemas import (
+    RoleCreate,
     TenantCreate,
     TenantResponse,
     TokenResponse,
@@ -77,4 +79,19 @@ def login_with_tenant(
             access_token=access_token, refresh_token=refresh_token
         ).model_dump(),
         message="登录成功",
+    )
+
+
+@router.post("/roles", response_model=UnifiedResponse[Any])
+def create_role(
+    data: RoleCreate,
+    db: DbDep,
+    _auth_user: Annotated[User, require_permission("role:create")],
+) -> UnifiedResponse[Any]:
+    from app.services.tenant.repository import RoleRepository
+
+    repo = RoleRepository(db)
+    role = repo.create(**data.model_dump())
+    return UnifiedResponse.success(
+        data={"id": role.id, "name": role.name}, message="角色创建成功"
     )
