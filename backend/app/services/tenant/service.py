@@ -1,6 +1,8 @@
+import re
+
 from sqlalchemy.orm import Session
 
-from app.core.database import create_tenant_database
+from app.core.database import _validate_db_name, create_tenant_database
 from app.core.security import get_password_hash, verify_password
 from app.services.tenant.models import Tenant, User
 from app.services.tenant.repository import TenantRepository, UserRepository
@@ -21,6 +23,7 @@ class TenantService:
         admin_email: str,
     ) -> tuple[Tenant, User]:
         db_name = f"tenant_{code}"
+        _validate_db_name(db_name)
         tenant = self.tenant_repo.create(
             name=name,
             code=code,

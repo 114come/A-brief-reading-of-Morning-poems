@@ -1,13 +1,25 @@
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from sqlalchemy import create_engine, text
+import re
+
+from sqlalchemy import URL, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.engine import Engine
 
 from app.core.config import settings
 
 if TYPE_CHECKING:
     from app.services.tenant.models import Tenant
+
+
+# MySQL identifier rules: start with letter, then letters/digits/underscores, max 64 chars
+_MYSQL_IDENTIFIER_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{0,63}$")
+
+
+def _validate_db_name(db_name: str) -> None:
+    if not _MYSQL_IDENTIFIER_RE.match(db_name):
+        raise ValueError(f"Invalid database name: {db_name!r}")
 
 
 class Base(DeclarativeBase):
@@ -38,26 +50,40 @@ def get_master_db() -> Generator[Session, None, None]:
         db.close()
 
 
-def get_tenant_engine(tenant: "Tenant") -> Any:
+def get_tenant_engine(tenant: "Tenant") -> Engine:
     """获取租户数据库的 SQLAlchemy 引擎"""
     # TODO: decrypt password
     password = tenant.db_password_encrypted or settings.MASTER_DB_PASSWORD
-    url = (
-        f"mysql+pymysql://{tenant.db_user}:{password}"
-        f"@{tenant.db_host}:{tenant.db_port}/{tenant.db_name}"
+    url = URL.create(
+        drivername="mysql+pymysql",
+        username=tenant.db_user,
+        password=password,
+        host=tenant.db_host,
+        port=tenant.db_port,
+        database=tenant.db_name,
     )
     return create_engine(url, pool_pre_ping=True, pool_recycle=3600)
 
 
 def create_tenant_database(tenant: "Tenant") -> None:
     """在 MySQL 中创建租户独立数据库"""
+    _validate_db_name(tenant.db_name)
     password = tenant.db_password_encrypted or settings.MASTER_DB_PASSWORD
     # 连接 mysql 系统库来执行 CREATE DATABASE
-    admin_url = (
-        f"mysql+pymysql://{tenant.db_user}:{password}"
-        f"@{tenant.db_host}:{tenant.db_port}/mysql"
+    admin_url = URL.create(
+        drivername="mysql+pymysql",
+        username=tenant.db_user,
+        password=password,
+        host=tenant.db_host,
+        port=tenant.db_port,
+        database="mysql",
     )
     admin_engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
     with admin_engine.connect() as conn:
-        conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {tenant.db_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
+        conn.execute(
+            text(
+                f"CREATE DATABASE IF NOT EXISTS {tenant.db_name} "
+                "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+            )
+        )
     admin_engine.dispose()
