@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.core.database import create_tenant_database
 from app.core.security import get_password_hash, verify_password
 from app.services.tenant.models import Tenant, User
 from app.services.tenant.repository import TenantRepository, UserRepository
@@ -29,6 +30,9 @@ class TenantService:
             db_user="root",
             db_password_encrypted="",  # TODO: encrypt real password
         )
+        # 创建物理数据库
+        create_tenant_database(tenant)
+        # TODO: 在租户库中创建基础表（users, roles, permissions）
         admin = self.user_repo.create(
             tenant_id=tenant.id,
             username=admin_username,
