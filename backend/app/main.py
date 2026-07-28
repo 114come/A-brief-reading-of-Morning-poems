@@ -1,0 +1,30 @@
+from fastapi import FastAPI
+
+from app.api.v1 import tenant as tenant_v1
+from app.core.exceptions import (
+    BusinessException,
+    business_exception_handler,
+    general_exception_handler,
+    http_exception_handler,
+)
+from fastapi.exceptions import HTTPException
+
+app = FastAPI(
+    title="Low-code Platform API",
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# 注册异常处理器
+app.add_exception_handler(BusinessException, business_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(Exception, general_exception_handler)
+
+# 注册路由
+app.include_router(tenant_v1.router, prefix="/api/v1")
+
+
+@app.get("/health")
+def health_check() -> dict[str, str]:
+    return {"status": "ok"}
