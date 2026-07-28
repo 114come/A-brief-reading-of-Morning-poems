@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
@@ -50,6 +52,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
 
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logging.exception("Unhandled error")
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"code": 500000, "data": None, "message": "服务器内部错误"},

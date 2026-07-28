@@ -49,4 +49,8 @@ def get_settings() -> Settings:
     return Settings()
 
 
+def _reset_settings_for_test() -> None:
+    get_settings.cache_clear()
+
+
 settings = get_settings()
