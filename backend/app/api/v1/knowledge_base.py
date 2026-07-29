@@ -16,7 +16,6 @@ from app.services.ai.knowledge_base.schemas import (
     KnowledgeBaseUpdate,
     SearchRequest,
     SearchResponse,
-    SearchResultItem,
 )
 from app.services.ai.knowledge_base.service import KnowledgeBaseService
 
@@ -99,7 +98,7 @@ def delete_kb(
 def upload_document(
     kb_id: int,
     file: UploadFile = File(...),
-    current_user: UserDep = None,  # type: ignore[assignment]
+    current_user: UserDep,
     db: Session = Depends(get_master_db),
 ) -> UnifiedResponse[Any]:
     if not file.filename:
