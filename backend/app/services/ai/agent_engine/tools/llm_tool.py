@@ -7,7 +7,7 @@ from app.services.ai.service import AIService
 class LLMTool(BaseTool):
     """LLM 对话工具：调用大模型进行文本生成"""
 
-    name = "llm_chat"
+    name = "llm"
     description = "向大语言模型发送提示词并获取回复，适用于文本生成、问答、翻译等任务"
     parameters: dict[str, Any] = {
         "type": "object",

@@ -77,21 +77,21 @@ class TestSessionMemory:
 
         mem.push_message("user", "Hello")
         mem.push_message("assistant", "Hi there!")
-        mem.push_message("user", "How are you?", metadata={"foo": "bar"})
+        mem.push_message("user", "How are you?", name="test_tool")
 
         history = mem.get_history()
         assert len(history) == 3
 
         assert history[0]["role"] == "user"
         assert history[0]["content"] == "Hello"
-        assert "metadata" not in history[0]
+        assert "name" not in history[0]
 
         assert history[1]["role"] == "assistant"
         assert history[1]["content"] == "Hi there!"
 
         assert history[2]["role"] == "user"
         assert history[2]["content"] == "How are you?"
-        assert history[2]["metadata"] == {"foo": "bar"}
+        assert history[2]["name"] == "test_tool"
 
     def test_get_history_empty(self) -> None:
         """Getting history for a conversation with no messages returns empty list."""
@@ -116,7 +116,7 @@ class TestSessionMemory:
         assert mem.get_history() == []
 
     def test_trim(self) -> None:
-        """Trimming keeps only the most recent *keep_last* messages."""
+        """Trimming keeps only the most recent *max_messages* messages."""
         mem, _ = make_memory()
 
         # Push 10 messages
@@ -124,18 +124,18 @@ class TestSessionMemory:
             mem.push_message("user", str(i))
 
         # Trim to last 3
-        mem.trim(keep_last=3)
+        mem.trim(max_messages=3)
 
         history = mem.get_history()
         assert len(history) == 3
         assert [m["content"] for m in history] == ["7", "8", "9"]
 
     def test_trim_does_nothing_when_under_limit(self) -> None:
-        """Trimming with keep_last larger than current length is a no-op."""
+        """Trimming with max_messages larger than current length is a no-op."""
         mem, _ = make_memory()
 
         for i in range(5):
             mem.push_message("user", str(i))
 
-        mem.trim(keep_last=10)
+        mem.trim(max_messages=10)
         assert len(mem.get_history()) == 5

@@ -8,7 +8,7 @@ from app.services.ai.knowledge_base.service import KnowledgeBaseService
 class KBTool(BaseTool):
     """知识库搜索工具：从知识库中检索相关文档片段"""
 
-    name = "kb_search"
+    name = "knowledge_base"
     description = "在知识库中搜索与查询相关的文档内容，返回匹配的文本片段及来源文档名称"
     parameters: dict[str, Any] = {
         "type": "object",

@@ -45,7 +45,7 @@ class SessionMemory:
 
     # -- public helpers -------------------------------------------------------
 
-    def push_message(self, role: str, content: str, metadata: dict[str, Any] | None = None) -> None:
+    def push_message(self, role: str, content: str, name: str | None = None) -> None:
         """Append a single message to the session history.
 
         Parameters
@@ -54,12 +54,12 @@ class SessionMemory:
             Message role (e.g. ``"user"``, ``"assistant"``, ``"system"``).
         content:
             Message text content.
-        metadata:
-            Optional extra data to store alongside the message.
+        name:
+            Optional tool name (for tool role messages).
         """
         message: dict[str, Any] = {"role": role, "content": content}
-        if metadata:
-            message["metadata"] = metadata
+        if name:
+            message["name"] = name
         self._redis.rpush(_key(self.conversation_id), json.dumps(message, ensure_ascii=False))
         self._redis.expire(_key(self.conversation_id), settings.AGENT_SESSION_TTL)
 
@@ -72,13 +72,13 @@ class SessionMemory:
         """Delete the entire session history for this conversation."""
         self._redis.delete(_key(self.conversation_id))
 
-    def trim(self, keep_last: int = 50) -> None:
-        """Keep only the most recent *keep_last* messages, discarding older ones.
+    def trim(self, max_messages: int = 200) -> None:
+        """Keep only the most recent *max_messages* messages, discarding older ones.
 
         Operates as a FIFO trim: the head of the list (oldest messages) is
         removed so that only the tail remains.
         """
         current_len = self._redis.llen(_key(self.conversation_id))
-        if current_len > keep_last:
-            self._redis.ltrim(_key(self.conversation_id), current_len - keep_last, -1)
+        if current_len > max_messages:
+            self._redis.ltrim(_key(self.conversation_id), current_len - max_messages, -1)
         self._redis.expire(_key(self.conversation_id), settings.AGENT_SESSION_TTL)

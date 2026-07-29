@@ -46,7 +46,7 @@ def safe_eval(expression: str) -> float | int:
                 f"仅支持四则运算、取模和幂运算。"
             )
         # 确保常量均为数字类型，阻止字符串或其他非数值常量
-        if isinstance(node, ast.Constant) and not isinstance(node.value, (int, float, complex)):
+        if isinstance(node, ast.Constant) and not isinstance(node.value, (int, float)):
             raise ValueError(
                 f"不支持的常量类型: {type(node.value).__name__}。仅支持数字常量。"
             )
@@ -86,5 +86,5 @@ class CalculatorTool(BaseTool):
             else:
                 formatted = str(result)
             return formatted
-        except (ValueError, SyntaxError, ZeroDivisionError) as e:
+        except (ValueError, SyntaxError, ZeroDivisionError, TypeError) as e:
             return f"错误：{e}"
