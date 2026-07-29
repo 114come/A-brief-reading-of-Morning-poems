@@ -1,8 +1,6 @@
-import json
 from datetime import datetime
-from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class KnowledgeBaseCreate(BaseModel):
