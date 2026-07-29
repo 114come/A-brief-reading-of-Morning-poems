@@ -15,7 +15,7 @@ class Agent(Base):
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    system_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     model_config: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     tools_config: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     max_iterations: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
@@ -43,7 +43,7 @@ class AgentConversation(Base):
         ForeignKey("tenants.id"), nullable=False, index=True
     )
     user_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
