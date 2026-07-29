@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     QDRANT_STORAGE_PATH: str = "data/qdrant_storage"
 
     # Embedding
-    EMBEDDING_MODEL_NAME: str = "BAAI/bge-small-zh-v1.5"
+    EMBEDDING_MODEL_NAME: str = "data/bge-model"
     EMBEDDING_BATCH_SIZE: int = 32
 
     # Chunking
@@ -48,6 +48,10 @@ class Settings(BaseSettings):
 
     # Upload
     UPLOAD_STORAGE_PATH: str = "storage/uploads"
+
+    # Agent
+    AGENT_MAX_ITERATIONS: int = 10
+    AGENT_SESSION_TTL: int = 86400  # Redis 会话 TTL（24小时）
 
     @property
     def MASTER_DATABASE_URL(self) -> str:
