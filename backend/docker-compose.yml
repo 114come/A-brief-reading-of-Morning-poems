@@ -46,6 +46,8 @@ services:
       - redis
     volumes:
       - ./app:/app/app
+      - ./data/qdrant_storage:/app/data/qdrant_storage
+      - ./storage/uploads:/app/storage/uploads
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:

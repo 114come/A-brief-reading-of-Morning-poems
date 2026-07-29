@@ -32,6 +32,23 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     APP_PORT: int = 8000
 
+    # Encryption (for API keys etc.)
+    ENCRYPTION_KEY: str = "change-me-in-production-32bytes!"
+
+    # Qdrant
+    QDRANT_STORAGE_PATH: str = "data/qdrant_storage"
+
+    # Embedding
+    EMBEDDING_MODEL_NAME: str = "BAAI/bge-small-zh-v1.5"
+    EMBEDDING_BATCH_SIZE: int = 32
+
+    # Chunking
+    CHUNK_SIZE: int = 512
+    CHUNK_OVERLAP: int = 128
+
+    # Upload
+    UPLOAD_STORAGE_PATH: str = "storage/uploads"
+
     @property
     def MASTER_DATABASE_URL(self) -> str:
         return (
