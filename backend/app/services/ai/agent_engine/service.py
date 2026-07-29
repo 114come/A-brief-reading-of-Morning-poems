@@ -34,7 +34,7 @@ class AgentService:
             name=data.name,
             description=data.description,
             system_prompt=data.system_prompt,
-            model_config=json.dumps(data.model_config, ensure_ascii=False),
+            model_config=json.dumps(data.config, ensure_ascii=False),
             tools_config=json.dumps(data.tools_config),
             max_iterations=data.max_iterations,
         )
@@ -59,8 +59,8 @@ class AgentService:
             update_kw["description"] = data.description
         if data.system_prompt is not None:
             update_kw["system_prompt"] = data.system_prompt
-        if data.model_config is not None:
-            update_kw["model_config"] = json.dumps(data.model_config, ensure_ascii=False)
+        if data.config is not None:
+            update_kw["model_config"] = json.dumps(data.config, ensure_ascii=False)
         if data.tools_config is not None:
             update_kw["tools_config"] = json.dumps(data.tools_config)
         if data.max_iterations is not None:

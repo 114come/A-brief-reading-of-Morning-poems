@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.v1 import agent as agent_v1
 from app.api.v1 import knowledge_base as kb_v1
 from app.api.v1 import llm as llm_v1
 from app.api.v1 import model as model_v1
@@ -25,6 +26,7 @@ app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore
 app.add_exception_handler(Exception, general_exception_handler)
 
 # 注册路由
+app.include_router(agent_v1.router, prefix="/api/v1")
 app.include_router(kb_v1.router, prefix="/api/v1")
 app.include_router(tenant_v1.router, prefix="/api/v1")
 app.include_router(model_v1.router, prefix="/api/v1")
