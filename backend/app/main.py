@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.v1 import model as model_v1
 from app.api.v1 import tenant as tenant_v1
 from app.core.exceptions import (
     BusinessException,
@@ -23,10 +24,12 @@ app.add_exception_handler(Exception, general_exception_handler)
 
 # 注册路由
 app.include_router(tenant_v1.router, prefix="/api/v1")
+app.include_router(model_v1.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
 def startup_event() -> None:
+    from app.api.v1.dynamic import register_dynamic_routers
     from app.core.database import MasterSessionLocal
     from app.services.tenant.seed import seed_permissions
 
@@ -35,6 +38,8 @@ def startup_event() -> None:
         seed_permissions(db)
     finally:
         db.close()
+
+    register_dynamic_routers(app)
 
 
 @app.get("/health")

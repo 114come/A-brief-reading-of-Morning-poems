@@ -14,9 +14,9 @@ DbDep = Annotated[Session, Depends(get_master_db)]
 
 async def get_current_user(
     db: DbDep,
-    authorization: str = Header(...),
+    authorization: str | None = Header(default=None),
 ) -> User:
-    if not authorization.startswith("Bearer "):
+    if not authorization or not authorization.startswith("Bearer "):
         raise UnauthorizedException("无效的认证头")
     token = authorization[7:]
     try:
