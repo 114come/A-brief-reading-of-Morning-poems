@@ -41,7 +41,7 @@ class AgentResponse(BaseModel):
     name: str
     description: str | None
     system_prompt: str
-    config: dict[str, Any] = Field(validation_alias="model_config")
+    config: dict[str, Any] = Field(alias="model_config")
     tools_config: list[str]
     max_iterations: int
     is_active: bool
