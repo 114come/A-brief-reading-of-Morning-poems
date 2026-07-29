@@ -155,7 +155,7 @@ class ReActExecutor:
                 if content:
                     yield {"event": "message", "data": {"content": content}}
                 self.session_memory.push_message(
-                    "assistant", content or "", metadata={"name": "assistant"} if content else None
+                    "assistant", content or "", name="assistant" if content else None
                 )
                 yield {
                     "event": "done",

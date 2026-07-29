@@ -47,11 +47,11 @@ class MockSessionMemory:
         self._messages: list[dict[str, Any]] = []
 
     def push_message(
-        self, role: str, content: str, metadata: dict[str, Any] | None = None
+        self, role: str, content: str, name: str | None = None
     ) -> None:
         message: dict[str, Any] = {"role": role, "content": content}
-        if metadata:
-            message["metadata"] = metadata
+        if name:
+            message["name"] = name
         self._messages.append(message)
 
     def get_history(self) -> list[dict[str, Any]]:
@@ -60,9 +60,9 @@ class MockSessionMemory:
     def clear(self) -> None:
         self._messages.clear()
 
-    def trim(self, keep_last: int = 50) -> None:
-        if len(self._messages) > keep_last:
-            self._messages = self._messages[-keep_last:]
+    def trim(self, max_messages: int = 200) -> None:
+        if len(self._messages) > max_messages:
+            self._messages = self._messages[-max_messages:]
 
 
 # ---------------------------------------------------------------------------
@@ -219,10 +219,10 @@ async def test_execute_stream_tool_call_then_answer(
     assert len(history) >= 2
     assert history[0]["role"] == "user"
     assert history[0]["content"] == "1+1等于几？"
-    # Last message should be assistant with metadata
+    # Last message should be assistant with name
     assert history[-1]["role"] == "assistant"
     assert history[-1]["content"] == "1 + 1 = 2"
-    assert history[-1].get("metadata") == {"name": "assistant"}
+    assert history[-1].get("name") == "assistant"
 
 
 @pytest.mark.asyncio
