@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.core.dependencies import DbDep, UserDep
 from app.core.exceptions import ForbiddenException, ValidationException
@@ -44,9 +44,11 @@ def list_models(
 @router.post("/{model_id}/publish", response_model=UnifiedResponse[Any])
 def publish_model(
     model_id: int,
+    request: Request,
     db: DbDep,
     current_user: UserDep,
 ) -> UnifiedResponse[Any]:
+    from app.api.v1.dynamic import register_dynamic_routers
     from app.services.tenant.service import TenantService
 
     service = ModelService(db)
@@ -62,6 +64,10 @@ def publish_model(
         raise ForbiddenException("无权操作此模型")
 
     model = service.publish_model(model_id, tenant)
+
+    # Re-register dynamic routers so the new table is immediately accessible
+    register_dynamic_routers(request.app)
+
     return UnifiedResponse.success(
         data={"id": model.id, "status": model.status, "table_name": model.table_name}
     )

@@ -119,7 +119,7 @@ def generate_crud_router(
     router = APIRouter(prefix=f"/dynamic/{model_def.table_name}", tags=[model_def.name])
 
     @router.post("/", response_model=UnifiedResponse[Any])
-    def create(data: SchemaT, db: DbDep) -> UnifiedResponse[Any]:
+    def create(data: CreateSchema, db: DbDep) -> UnifiedResponse[Any]:
         obj = DynamicModel(**data.model_dump(exclude_unset=True))
         db.add(obj)
         db.commit()
@@ -145,7 +145,7 @@ def generate_crud_router(
         return UnifiedResponse.success(data=ResponseSchema.model_validate(item).model_dump())
 
     @router.put("/{item_id}", response_model=UnifiedResponse[Any])
-    def update(item_id: int, data: SchemaT, db: DbDep) -> UnifiedResponse[Any]:
+    def update(item_id: int, data: CreateSchema, db: DbDep) -> UnifiedResponse[Any]:
         item = db.query(DynamicModel).filter_by(id=item_id).first()
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
