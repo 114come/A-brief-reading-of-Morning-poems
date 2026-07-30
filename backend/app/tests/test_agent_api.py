@@ -350,3 +350,78 @@ def test_chat_returns_sse() -> None:
     assert "event: message" in content, f"SSE content missing event: message\n{content}"
     assert "Hello, world!" in content, f"SSE content missing Hello message\n{content}"
     assert "event: done" in content, f"SSE content missing event: done\n{content}"
+
+
+# ── Memory Management Tests ───────────────────────────────
+
+
+def test_list_memories_empty() -> None:
+    """Test listing memories for an agent returns empty list initially."""
+    _, token = _create_tenant_and_login("list_memories")
+    agent_id = _create_agent(token)
+
+    response = client.get(
+        f"/api/v1/agents/{agent_id}/memories",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["code"] == 0
+    assert data["data"] == []
+
+
+def test_delete_memory() -> None:
+    """Test deleting a single memory by ID after creating it."""
+    tenant_id, token = _create_tenant_and_login("del_memory")
+    agent_id = _create_agent(token)
+
+    # Directly insert a memory record via the test session so the API can delete it
+    from app.services.ai.memory.repository import MemoryRepository
+
+    db = TestSessionLocal()
+    try:
+        Base.metadata.create_all(bind=TEST_ENGINE)
+        repo = MemoryRepository(db)
+        mem = repo.create(
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            memory_type="test",
+            content="test memory",
+        )
+        memory_id = mem.id
+    finally:
+        db.close()
+
+    response = client.delete(
+        f"/api/v1/agents/{agent_id}/memories/{memory_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["code"] == 0
+    assert data["message"] == "记忆已删除"
+
+
+def test_clear_memories() -> None:
+    """Test clearing all memories for an agent."""
+    _, token = _create_tenant_and_login("clear_memories")
+    agent_id = _create_agent(token)
+
+    # Clear memories (should be a no-op on empty, no error)
+    response = client.delete(
+        f"/api/v1/agents/{agent_id}/memories",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["code"] == 0
+    assert data["message"] == "记忆已清空"
+
+    # Verify the list is still empty
+    response = client.get(
+        f"/api/v1/agents/{agent_id}/memories",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    data = response.json()
+    assert data["code"] == 0
+    assert data["data"] == []

@@ -17,6 +17,8 @@ from app.services.ai.agent_engine.schemas import (
     ConversationResponse,
 )
 from app.services.ai.agent_engine.service import AgentService
+from app.services.ai.memory.schemas import MemoryResponse
+from app.services.ai.memory.service import MemoryService
 
 logger = logging.getLogger(__name__)
 
@@ -219,3 +221,46 @@ async def chat(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# ── Memory Management APIs ────────────────────────────────
+
+
+@router.get("/{agent_id}/memories", response_model=UnifiedResponse[Any])
+def list_memories(
+    agent_id: int,
+    current_user: UserDep,
+    db: DbDep,
+) -> UnifiedResponse:
+    service = AgentService(db)
+    agent = service.get_agent(agent_id)
+    if not agent or agent.tenant_id != current_user.tenant_id:
+        raise ValidationException("Agent 不存在")
+    memory_service = MemoryService(db)
+    memories = memory_service.list_memories(current_user.tenant_id, agent_id)
+    return UnifiedResponse.success(
+        data=[MemoryResponse.model_validate(m).model_dump() for m in memories]
+    )
+
+
+@router.delete("/{agent_id}/memories/{memory_id}", response_model=UnifiedResponse[Any])
+def delete_memory(
+    agent_id: int,
+    memory_id: int,
+    current_user: UserDep,
+    db: DbDep,
+) -> UnifiedResponse:
+    memory_service = MemoryService(db)
+    memory_service.delete_memory(current_user.tenant_id, memory_id)
+    return UnifiedResponse.success(message="记忆已删除")
+
+
+@router.delete("/{agent_id}/memories", response_model=UnifiedResponse[Any])
+def clear_memories(
+    agent_id: int,
+    current_user: UserDep,
+    db: DbDep,
+) -> UnifiedResponse:
+    memory_service = MemoryService(db)
+    memory_service.clear_agent_memories(current_user.tenant_id, agent_id)
+    return UnifiedResponse.success(message="记忆已清空")
