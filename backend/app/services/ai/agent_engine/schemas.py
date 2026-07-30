@@ -19,6 +19,13 @@ class AgentCreate(BaseModel):
         default_factory=lambda: ["llm", "knowledge_base"]
     )
     max_iterations: int = Field(default=10, ge=1, le=100)
+    memory_config: dict[str, Any] = Field(
+        default_factory=lambda: {
+            "enabled": True,
+            "short_term_interval": 5,
+            "long_term_enabled": True,
+        }
+    )
 
 
 class AgentUpdate(BaseModel):
@@ -31,6 +38,7 @@ class AgentUpdate(BaseModel):
     tools_config: list[str] | None = None
     max_iterations: int | None = Field(None, ge=1, le=100)
     is_active: bool | None = None
+    memory_config: dict[str, Any] | None = None
 
 
 class AgentResponse(BaseModel):
@@ -43,6 +51,7 @@ class AgentResponse(BaseModel):
     system_prompt: str
     config: dict[str, Any] = Field(alias="model_config")
     tools_config: list[str]
+    memory_config: dict[str, Any] = Field(default_factory=dict)
     max_iterations: int
     is_active: bool
     created_at: datetime
@@ -51,10 +60,15 @@ class AgentResponse(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def parse_json_fields(cls, data: Any) -> Any:
-        """Parse model_config (str->dict) and tools_config (str->list) from DB JSON strings."""
+        """Parse JSON string fields from DB storage into Python objects.
+
+        Handles model_config (str->dict), tools_config (str->list), and
+        memory_config (str->dict).
+        """
         if isinstance(data, dict):
             model_config_val = data.get("model_config") or data.get("config")
             tools_config_val = data.get("tools_config")
+            memory_config_val = data.get("memory_config")
         else:
             model_config_val = (
                 getattr(data, "model_config", None)
@@ -64,6 +78,11 @@ class AgentResponse(BaseModel):
             tools_config_val = (
                 getattr(data, "tools_config", None)
                 if hasattr(data, "tools_config")
+                else None
+            )
+            memory_config_val = (
+                getattr(data, "memory_config", None)
+                if hasattr(data, "memory_config")
                 else None
             )
 
@@ -86,6 +105,16 @@ class AgentResponse(BaseModel):
                 data["tools_config"] = parsed
             else:
                 data.tools_config = parsed
+
+        if isinstance(memory_config_val, str):
+            try:
+                parsed = json.loads(memory_config_val)
+            except json.JSONDecodeError:
+                parsed = {}
+            if isinstance(data, dict):
+                data["memory_config"] = parsed
+            else:
+                data.memory_config = parsed
 
         return data
 
