@@ -12,6 +12,7 @@ from app.services.ai.agent_engine.schemas import AgentCreate, AgentUpdate
 from app.services.ai.agent_engine.session_memory import SessionMemory
 from app.services.ai.service import AIService
 from app.services.ai.knowledge_base.service import KnowledgeBaseService
+from app.services.ai.memory.collector import MemoryCollector
 
 logger = logging.getLogger(__name__)
 
@@ -127,8 +128,32 @@ class AgentService:
         if not conv or conv.agent_id != agent_id:
             raise ValidationException("会话不存在")
 
+        # Memory integration
+        memory_config = json.loads(agent.memory_config) if isinstance(agent.memory_config, str) else {}
+        memory_enabled = memory_config.get("enabled", False)
+        collector = None
+        enriched_prompt = agent.system_prompt
+
+        if memory_enabled:
+            collector = MemoryCollector(self.db, self.ai_service)
+            context = collector.build_context(tenant_id, agent.id, conversation_id, message)
+            if context:
+                enriched_prompt += "\n\n[上下文]\n" + context
+
         session_memory = SessionMemory(conversation_id=conversation_id)
         executor = ReActExecutor(ai_service=self.ai_service, session_memory=session_memory)
 
-        async for event in executor.execute_stream(tenant_id=tenant_id, agent=agent, message=message):
+        async for event in executor.execute_stream(
+            tenant_id=tenant_id, agent=agent, message=message,
+            system_prompt_override=enriched_prompt,
+        ):
             yield event
+            if event.get("event") == "done" and collector:
+                try:
+                    messages = session_memory.get_history()
+                    interval = memory_config.get("short_term_interval", 5)
+                    await collector.collect(tenant_id, agent.id, conversation_id, messages, interval)
+                    await collector.collect_long_term(tenant_id, agent.id, conversation_id, messages)
+                except Exception:
+                    logger.exception("Memory collection failed")
+

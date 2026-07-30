@@ -27,6 +27,7 @@ class ReActExecutor:
         tenant_id: int,
         agent: Agent,
         message: str,
+        system_prompt_override: str | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
         """Execute the ReAct loop, yielding SSE event dicts."""
         # Parse config
@@ -50,7 +51,7 @@ class ReActExecutor:
         # Build messages
         history = self.session_memory.get_history()
         messages: list[dict[str, Any]] = [
-            {"role": "system", "content": agent.system_prompt},
+            {"role": "system", "content": system_prompt_override or agent.system_prompt},
             *history,
             {"role": "user", "content": message},
         ]
