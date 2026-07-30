@@ -1,7 +1,10 @@
+import base64
+import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import jwt
+from cryptography.fernet import Fernet
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -40,3 +43,22 @@ def decode_token(token: str) -> dict[str, Any]:
         token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
     )
     return payload
+
+
+# ─── API Key 加密/解密 ───────────────────────────────────────────────
+
+
+def _get_fernet() -> Fernet:
+    """从配置的 ENCRYPTION_KEY 派生 Fernet 密钥"""
+    key = hashlib.sha256(settings.ENCRYPTION_KEY.encode()).digest()
+    return Fernet(base64.urlsafe_b64encode(key))
+
+
+def encrypt_api_key(plain_text: str) -> str:
+    """加密 API Key"""
+    return _get_fernet().encrypt(plain_text.encode()).decode()
+
+
+def decrypt_api_key(encrypted: str) -> str:
+    """解密 API Key"""
+    return _get_fernet().decrypt(encrypted.encode()).decode()

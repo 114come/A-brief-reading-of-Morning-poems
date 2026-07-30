@@ -35,6 +35,25 @@ class DataModelRepository:
             .all()
         )
 
+    def update(self, model_id: int, **kwargs: Any) -> DataModel | None:
+        model = self.get_by_id(model_id)
+        if not model:
+            return None
+        for key, value in kwargs.items():
+            if hasattr(model, key):
+                setattr(model, key, value)
+        self.db.commit()
+        self.db.refresh(model)
+        return model
+
+    def delete(self, model_id: int) -> bool:
+        model = self.get_by_id(model_id)
+        if not model:
+            return False
+        self.db.delete(model)
+        self.db.commit()
+        return True
+
 
 class DataFieldRepository:
     def __init__(self, db: Session) -> None:
@@ -46,3 +65,11 @@ class DataFieldRepository:
         self.db.commit()
         self.db.refresh(field)
         return field
+
+    def list_by_model(self, model_id: int) -> list[DataField]:
+        return (
+            self.db.query(DataField)
+            .filter(DataField.model_id == model_id)
+            .order_by(DataField.sort_order)
+            .all()
+        )

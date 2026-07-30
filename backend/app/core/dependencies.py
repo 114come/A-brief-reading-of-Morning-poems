@@ -1,9 +1,14 @@
+from collections.abc import Generator
 from typing import Annotated, Any
 
 from fastapi import Depends, Header
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.database import get_master_db
+from app.core.database import (
+    MasterSessionLocal,
+    get_cached_tenant_engine,
+    get_master_db,
+)
 from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.security import decode_token
 from app.services.tenant.models import User
@@ -39,6 +44,46 @@ async def get_current_user(
 
 
 UserDep = Annotated[User, Depends(get_current_user)]
+
+
+def get_tenant_db(
+    authorization: str | None = Header(default=None),
+) -> Generator[Session, None, None]:
+    """FastAPI Dependency: 从 JWT 提取 tenant_id，返回租户数据库 session"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise UnauthorizedException("无效的认证头")
+    token = authorization[7:]
+    try:
+        payload = decode_token(token)
+    except Exception:
+        raise UnauthorizedException("无效的令牌")
+
+    tenant_id = payload.get("tenant_id")
+    if not tenant_id:
+        raise UnauthorizedException("令牌缺少 tenant_id")
+
+    from app.services.tenant.models import Tenant
+
+    master_db = MasterSessionLocal()
+    try:
+        tenant = master_db.query(Tenant).filter_by(id=int(tenant_id)).first()
+        if not tenant:
+            raise UnauthorizedException("租户不存在")
+        if tenant.status != "active":
+            raise UnauthorizedException("租户已停用")
+    finally:
+        master_db.close()
+
+    engine = get_cached_tenant_engine(tenant)
+    TenantSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = TenantSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+TenantDbDep = Annotated[Session, Depends(get_tenant_db)]
 
 
 def require_permission(permission_code: str) -> Any:

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class DataFieldCreate(BaseModel):
@@ -18,6 +18,28 @@ class DataFieldResponse(DataFieldCreate):
     id: int
     db_column_type: str
     created_at: datetime
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_constraints(cls, data: Any) -> Any:
+        """当 constraints 是 JSON 字符串时（从数据库读取），自动解析为 dict"""
+        if isinstance(data, dict):
+            constraints = data.get("constraints")
+        else:
+            constraints = getattr(data, "constraints", None) if hasattr(data, "constraints") else None
+
+        if isinstance(constraints, str):
+            import json
+            try:
+                parsed = json.loads(constraints)
+                if isinstance(data, dict):
+                    data["constraints"] = parsed
+                else:
+                    data.constraints = parsed
+            except json.JSONDecodeError:
+                pass  # 保持原样，让 Pydantic 验证失败
+
+        return data
 
 
 class DataModelCreate(BaseModel):

@@ -4,6 +4,7 @@ from app.api.v1 import agent as agent_v1
 from app.api.v1 import knowledge_base as kb_v1
 from app.api.v1 import llm as llm_v1
 from app.api.v1 import model as model_v1
+from app.api.v1 import workflow as workflow_v1
 from app.api.v1 import tenant as tenant_v1
 from app.core.exceptions import (
     BusinessException,
@@ -31,6 +32,7 @@ app.include_router(kb_v1.router, prefix="/api/v1")
 app.include_router(tenant_v1.router, prefix="/api/v1")
 app.include_router(model_v1.router, prefix="/api/v1")
 app.include_router(llm_v1.router, prefix="/api/v1")
+app.include_router(workflow_v1.router, prefix="/api/v1")
 
 
 @app.on_event("startup")

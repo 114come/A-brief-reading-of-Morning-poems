@@ -97,8 +97,8 @@ def delete_kb(
 @router.post("/{kb_id}/documents", response_model=UnifiedResponse[Any])
 def upload_document(
     kb_id: int,
-    file: UploadFile = File(...),
     current_user: UserDep,
+    file: UploadFile = File(...),
     db: Session = Depends(get_master_db),
 ) -> UnifiedResponse[Any]:
     if not file.filename:

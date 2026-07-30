@@ -50,6 +50,16 @@ def get_master_db() -> Generator[Session, None, None]:
         db.close()
 
 
+_tenant_engine_cache: dict[int, Engine] = {}
+
+
+def get_cached_tenant_engine(tenant: "Tenant") -> Engine:
+    """获取租户数据库引擎（带缓存，避免每请求创建新连接池）"""
+    if tenant.id not in _tenant_engine_cache:
+        _tenant_engine_cache[tenant.id] = get_tenant_engine(tenant)
+    return _tenant_engine_cache[tenant.id]
+
+
 def get_tenant_engine(tenant: "Tenant") -> Engine:
     """获取租户数据库的 SQLAlchemy 引擎"""
     # TODO: decrypt password

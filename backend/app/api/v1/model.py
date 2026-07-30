@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request
 from app.core.dependencies import DbDep, UserDep
 from app.core.exceptions import ForbiddenException, ValidationException
 from app.core.response import UnifiedResponse
-from app.services.model.schemas import DataModelCreate
+from app.services.model.schemas import DataModelCreate, DataModelResponse
 from app.services.model.service import ModelService
 
 router = APIRouter(prefix="/models", tags=["数据模型"])
@@ -39,6 +39,51 @@ def list_models(
             for m in models
         ]
     )
+
+
+@router.get("/{model_id}", response_model=UnifiedResponse[Any])
+def get_model(
+    model_id: int,
+    db: DbDep,
+    current_user: UserDep,
+) -> UnifiedResponse[Any]:
+    service = ModelService(db)
+    model = service.get_model_with_fields(model_id)
+    if not model:
+        raise ValidationException("模型不存在")
+    if model.tenant_id != current_user.tenant_id:
+        raise ForbiddenException("无权查看此模型")
+    return UnifiedResponse.success(data=DataModelResponse.model_validate(model).model_dump())
+
+
+@router.put("/{model_id}", response_model=UnifiedResponse[Any])
+def update_model(
+    model_id: int,
+    data: DataModelCreate,
+    db: DbDep,
+    current_user: UserDep,
+) -> UnifiedResponse[Any]:
+    service = ModelService(db)
+    model = service.update_model(model_id, data)
+    return UnifiedResponse.success(
+        data={"id": model.id, "name": model.name, "table_name": model.table_name}
+    )
+
+
+@router.delete("/{model_id}", response_model=UnifiedResponse[Any])
+def delete_model(
+    model_id: int,
+    db: DbDep,
+    current_user: UserDep,
+) -> UnifiedResponse[Any]:
+    service = ModelService(db)
+    model = service.get_model_with_fields(model_id)
+    if not model:
+        raise ValidationException("模型不存在")
+    if model.tenant_id != current_user.tenant_id:
+        raise ForbiddenException("无权删除此模型")
+    service.delete_model(model_id)
+    return UnifiedResponse.success(message="Model deleted successfully")
 
 
 @router.post("/{model_id}/publish", response_model=UnifiedResponse[Any])

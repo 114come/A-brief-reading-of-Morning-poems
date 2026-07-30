@@ -2,11 +2,11 @@ from datetime import datetime
 from typing import Any, TypeVar
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, ConfigDict, create_model
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, DECIMAL, JSON, String, Text, func
 
 from app.core.database import Base
-from app.core.dependencies import DbDep
+from app.core.dependencies import TenantDbDep, UserDep
 from app.core.response import UnifiedResponse
 from app.services.model.models import DataField, DataModel
 
@@ -51,6 +51,7 @@ def generate_sqlalchemy_model(model_def: DataModel) -> type[Base]:
 
     attrs: dict[str, Any] = {
         "__tablename__": table_name,
+        "__table_args__": {"extend_existing": True},
         "id": Column(BigInteger, primary_key=True, autoincrement=True),
         "created_at": Column(DateTime, default=func.now(), nullable=False),
         "updated_at": Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False),
@@ -79,6 +80,11 @@ def _get_pydantic_field_type(field_type: str | None) -> tuple[Any, Any]:
     return (str | None, None)
 
 
+class ResponseBase(BaseModel):
+    """Pydantic 基类：支持 from_attributes=True，允许从 ORM 对象验证"""
+    model_config = ConfigDict(from_attributes=True)
+
+
 def generate_pydantic_schemas(
     model_def: DataModel,
 ) -> tuple[type[BaseModel], type[BaseModel]]:
@@ -102,7 +108,7 @@ def generate_pydantic_schemas(
 
     ResponseSchema = create_model(
         f"{model_def.table_name}_response",
-        __base__=BaseModel,
+        __base__=ResponseBase,
         **response_fields,
     )
 
@@ -119,7 +125,7 @@ def generate_crud_router(
     router = APIRouter(prefix=f"/dynamic/{model_def.table_name}", tags=[model_def.name])
 
     @router.post("/", response_model=UnifiedResponse[Any])
-    def create(data: CreateSchema, db: DbDep) -> UnifiedResponse[Any]:
+    def create(data: CreateSchema, db: TenantDbDep, current_user: UserDep) -> UnifiedResponse[Any]:
         obj = DynamicModel(**data.model_dump(exclude_unset=True))
         db.add(obj)
         db.commit()
@@ -128,7 +134,8 @@ def generate_crud_router(
 
     @router.get("/", response_model=UnifiedResponse[Any])
     def list_items(
-        db: DbDep,
+        db: TenantDbDep,
+        current_user: UserDep,
         skip: int = 0,
         limit: int = 100,
     ) -> UnifiedResponse[Any]:
@@ -138,14 +145,14 @@ def generate_crud_router(
         )
 
     @router.get("/{item_id}", response_model=UnifiedResponse[Any])
-    def get_item(item_id: int, db: DbDep) -> UnifiedResponse[Any]:
+    def get_item(item_id: int, db: TenantDbDep, current_user: UserDep) -> UnifiedResponse[Any]:
         item = db.query(DynamicModel).filter_by(id=item_id).first()
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
         return UnifiedResponse.success(data=ResponseSchema.model_validate(item).model_dump())
 
     @router.put("/{item_id}", response_model=UnifiedResponse[Any])
-    def update(item_id: int, data: CreateSchema, db: DbDep) -> UnifiedResponse[Any]:
+    def update(item_id: int, data: CreateSchema, db: TenantDbDep, current_user: UserDep) -> UnifiedResponse[Any]:
         item = db.query(DynamicModel).filter_by(id=item_id).first()
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -156,7 +163,7 @@ def generate_crud_router(
         return UnifiedResponse.success(data=ResponseSchema.model_validate(item).model_dump())
 
     @router.delete("/{item_id}", response_model=UnifiedResponse[Any])
-    def delete(item_id: int, db: DbDep) -> UnifiedResponse[Any]:
+    def delete(item_id: int, db: TenantDbDep, current_user: UserDep) -> UnifiedResponse[Any]:
         item = db.query(DynamicModel).filter_by(id=item_id).first()
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
