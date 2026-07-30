@@ -142,8 +142,17 @@ def db_session() -> Session:
 
     from app.core.database import Base
 
+    # Import Tenant so the FK on data_models.tenant_id can be resolved.
+    from app.services.tenant.models import Tenant  # noqa: F401
+
     engine = create_engine("sqlite:///:memory:", echo=False)
-    Base.metadata.create_all(bind=engine)
+    # Only create application-defined system tables, skipping any leftover
+    # dynamic tables that previous tests may have registered in Base.metadata.
+    system_names = {"tenants", "data_models", "data_fields"}
+    system_tables = [
+        t for n, t in Base.metadata.tables.items() if n in system_names
+    ]
+    Base.metadata.create_all(bind=engine, tables=system_tables)
     session = Session(bind=engine)
     yield session
     session.close()
@@ -153,6 +162,11 @@ def db_session() -> Session:
 @pytest.fixture
 def lowcode_models(db_session: Session) -> tuple[DataModel, type]:
     """Seed a DataModel + DataField row and create the dynamic table."""
+    from datetime import datetime
+
+    from sqlalchemy import Column, DateTime, Integer, String, func, text
+
+    from app.core.database import Base
     from app.services.model.generator import generate_sqlalchemy_model
     from app.services.model.models import DataField, DataModel
 
@@ -197,10 +211,43 @@ def lowcode_models(db_session: Session) -> tuple[DataModel, type]:
         db_session.add(f)
     db_session.commit()
 
-    DynamicModel = generate_sqlalchemy_model(model)
-    from app.core.database import Base
+    # Create the dynamic table with raw SQL so id is INTEGER PRIMARY KEY.
+    # SQLite only auto-increments INTEGER PRIMARY KEY, not BIGINT PRIMARY KEY,
+    # and the tool's generate_sqlalchemy_model uses BigInteger for id.
+    db_session.execute(text("""
+        CREATE TABLE employee_onboarding (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            name VARCHAR(100),
+            department VARCHAR(100),
+            age INTEGER
+        )
+    """))
+    db_session.commit()
 
-    Base.metadata.create_all(bind=db_session.get_bind())
+    # Return a lightweight model for test-verification queries.
+    DynamicModel = type(
+        "employee_onboarding",
+        (Base,),
+        {
+            "__tablename__": "employee_onboarding",
+            "__table_args__": {"extend_existing": True},
+            "id": Column(Integer, primary_key=True, autoincrement=True),
+            "created_at": Column(
+                DateTime, default=func.now(), nullable=False
+            ),
+            "updated_at": Column(
+                DateTime,
+                default=func.now(),
+                onupdate=func.now(),
+                nullable=False,
+            ),
+            "name": Column(String(100), nullable=True),
+            "department": Column(String(100), nullable=True),
+            "age": Column(Integer, nullable=True),
+        },
+    )
 
     return model, DynamicModel
 
