@@ -4,15 +4,41 @@ from fastapi import APIRouter, FastAPI
 from sqlalchemy.orm import Session
 
 from app.core.database import master_engine
+from app.core.dependencies import DbDep, UserDep
+from app.core.response import UnifiedResponse
 from app.services.model.generator import (
     generate_crud_router,
     generate_pydantic_schemas,
     generate_sqlalchemy_model,
 )
 from app.services.model.models import DataModel
+from app.services.model.repository import DataModelRepository
 
 router = APIRouter(prefix="/dynamic", tags=["动态数据"])
 logger = logging.getLogger(__name__)
+
+
+@router.get("/models")
+def list_dynamic_models(
+    current_user: UserDep,
+    db: DbDep,
+) -> UnifiedResponse:
+    """列出当前租户下所有可用的动态模型定义（用于 ToolCall 配置 UI）"""
+    repo = DataModelRepository(db)
+    models = repo.list_by_tenant(current_user.tenant_id)
+    return UnifiedResponse.success(
+        data=[
+            {
+                "id": m.id,
+                "name": m.name,
+                "table_name": m.table_name,
+                "fields": [
+                    {"name": f.name, "field_type": f.field_type} for f in m.fields
+                ],
+            }
+            for m in models
+        ]
+    )
 
 
 def register_dynamic_routers(app: FastAPI) -> None:

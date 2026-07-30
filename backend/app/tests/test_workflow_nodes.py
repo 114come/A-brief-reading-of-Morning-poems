@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -8,6 +8,7 @@ from app.services.ai.workflow.nodes.human_node import HumanReviewNode
 from app.services.ai.workflow.nodes.kb_node import KBNode
 from app.services.ai.workflow.nodes.llm_node import LLMNode
 from app.services.ai.workflow.nodes.start_end import EndNode, StartNode
+from app.services.ai.workflow.nodes.toolcall_node import ToolCallNode
 
 
 # ── StartNode ────────────────────────────────────────────────────────────────
@@ -177,13 +178,159 @@ async def test_human_node_defaults() -> None:
     assert result["assignee_role"] == ""
 
 
+# ── ToolCallNode ──────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_toolcall_no_db() -> None:
+    node = ToolCallNode()
+    result = await node.execute({}, {}, {})
+    assert result == {"error": "Database not available"}
+
+
+@pytest.mark.asyncio
+@patch(
+    "app.services.ai.workflow.nodes.toolcall_node.get_model_definition",
+    return_value=None,
+)
+async def test_toolcall_table_not_found(mock_get_def: MagicMock) -> None:
+    node = ToolCallNode()
+    config = {"operation": "query", "table_name": "nonexistent"}
+    context = {"tenant_id": 1}
+    services = {"db": MagicMock()}
+    result = await node.execute(config, context, services)
+    assert result == {"error": "Table 'nonexistent' not found"}
+    mock_get_def.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("app.services.ai.workflow.nodes.toolcall_node.query_model")
+async def test_toolcall_query(mock_query: MagicMock) -> None:
+    mock_query.return_value = ([{"id": 1, "title": "test"}], 1)
+    node = ToolCallNode()
+    config = {
+        "operation": "query",
+        "table_name": "products",
+        "filters": {"status": "active"},
+        "limit": 10,
+    }
+    context = {"tenant_id": 1}
+    services = {"db": MagicMock()}
+    result = await node.execute(config, context, services)
+    assert result["count"] == 1
+    assert result["items"][0]["title"] == "test"
+    mock_query.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("app.services.ai.workflow.nodes.toolcall_node.insert_model")
+async def test_toolcall_insert(mock_insert: MagicMock) -> None:
+    mock_insert.return_value = {
+        "item": {"id": 1, "title": "new item"},
+        "operation": "insert",
+    }
+    node = ToolCallNode()
+    config = {
+        "operation": "insert",
+        "table_name": "products",
+        "data": {"title": "new item"},
+    }
+    context = {"tenant_id": 1}
+    services = {"db": MagicMock()}
+    result = await node.execute(config, context, services)
+    assert result["operation"] == "insert"
+    assert result["item"]["title"] == "new item"
+    mock_insert.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("app.services.ai.workflow.nodes.toolcall_node.update_model")
+async def test_toolcall_update(mock_update: MagicMock) -> None:
+    mock_update.return_value = {
+        "item": {"id": 1, "title": "updated"},
+        "operation": "update",
+    }
+    node = ToolCallNode()
+    config = {
+        "operation": "update",
+        "table_name": "products",
+        "filters": {"id": 1},
+        "data": {"title": "updated"},
+    }
+    context = {"tenant_id": 1}
+    services = {"db": MagicMock()}
+    result = await node.execute(config, context, services)
+    assert result["operation"] == "update"
+    assert result["item"]["title"] == "updated"
+    mock_update.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_toolcall_update_missing_id() -> None:
+    node = ToolCallNode()
+    config = {
+        "operation": "update",
+        "table_name": "products",
+        "filters": {},
+        "data": {"title": "updated"},
+    }
+    context = {"tenant_id": 1}
+    services = {"db": MagicMock()}
+    result = await node.execute(config, context, services)
+    assert result == {"error": "update requires filters.id"}
+
+
+@pytest.mark.asyncio
+@patch("app.services.ai.workflow.nodes.toolcall_node.delete_model")
+async def test_toolcall_delete(mock_delete: MagicMock) -> None:
+    mock_delete.return_value = {"operation": "delete", "id": 1}
+    node = ToolCallNode()
+    config = {
+        "operation": "delete",
+        "table_name": "products",
+        "filters": {"id": 1},
+    }
+    context = {"tenant_id": 1}
+    services = {"db": MagicMock()}
+    result = await node.execute(config, context, services)
+    assert result["operation"] == "delete"
+    assert result["id"] == 1
+    mock_delete.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_toolcall_delete_missing_id() -> None:
+    node = ToolCallNode()
+    config = {
+        "operation": "delete",
+        "table_name": "products",
+        "filters": {},
+    }
+    context = {"tenant_id": 1}
+    services = {"db": MagicMock()}
+    result = await node.execute(config, context, services)
+    assert result == {"error": "delete requires filters.id"}
+
+
+@pytest.mark.asyncio
+async def test_toolcall_unknown_operation() -> None:
+    node = ToolCallNode()
+    config = {"operation": "unknown_op", "table_name": "products"}
+    context = {"tenant_id": 1}
+    services = {"db": MagicMock()}
+    result = await node.execute(config, context, services)
+    assert result == {"error": "Unknown operation: unknown_op"}
+
+
 # ── NODE_REGISTRY ────────────────────────────────────────────────────────────
 
 
 def test_node_registry_contains_all_types() -> None:
     from app.services.ai.workflow.nodes import NODE_REGISTRY
 
-    expected_types = {"start", "end", "llm", "kb", "condition", "human"}
+    expected_types = {
+        "start", "end", "llm", "kb", "condition", "human", "tool_call"
+    }
     assert set(NODE_REGISTRY.keys()) == expected_types
 
     for node_type, node in NODE_REGISTRY.items():
