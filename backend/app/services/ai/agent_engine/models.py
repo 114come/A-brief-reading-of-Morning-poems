@@ -20,6 +20,10 @@ class Agent(Base):
     tools_config: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     max_iterations: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    memory_config: Mapped[str] = mapped_column(
+        Text, nullable=False, default="{}",
+        comment='JSON: {"enabled": true, "short_term_interval": 5, "long_term_enabled": true}',
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )

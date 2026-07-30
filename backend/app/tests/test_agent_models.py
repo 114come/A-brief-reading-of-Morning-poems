@@ -15,6 +15,7 @@ def test_agent_model_attributes() -> None:
         "tools_config",
         "max_iterations",
         "is_active",
+        "memory_config",
         "created_at",
         "updated_at",
     }
@@ -44,6 +45,7 @@ def test_agent_defaults() -> None:
     assert Agent.__table__.columns["is_active"].default.arg is True
     assert Agent.__table__.columns["model_config"].default.arg == "{}"
     assert Agent.__table__.columns["tools_config"].default.arg == "[]"
+    assert Agent.__table__.columns["memory_config"].default.arg == "{}"
 
 
 def test_agent_conversation_defaults() -> None:
