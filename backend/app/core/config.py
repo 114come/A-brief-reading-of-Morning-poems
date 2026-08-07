@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     AGENT_MAX_ITERATIONS: int = 10
     AGENT_SESSION_TTL: int = 86400  # Redis 会话 TTL（24小时）
 
+    # LLM（用于例句翻译等；在 .env 配置后启动时自动注册为 provider）
+    LLM_API_KEY: str = ""
+    LLM_BASE_URL: str = ""  # 如 https://api.deepseek.com/v1 或 https://dashscope.aliyuncs.com/compatible-mode/v1
+    LLM_MODEL: str = ""  # 如 deepseek-chat / qwen-plus / ernie-4.0-8k
+    LLM_PROVIDER_TYPE: str = "custom"  # openai/custom/wenxin/qianwen
+
     @property
     def MASTER_DATABASE_URL(self) -> str:
         return (

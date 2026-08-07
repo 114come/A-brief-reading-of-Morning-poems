@@ -49,15 +49,14 @@ class MemoryCollector:
     ) -> str:
         """Combine long-term facts and short-term summaries into a
         context string for the LLM."""
-
-        parts: list[str] = []
-
-        facts = self.long_term.search(tenant_id, agent_id, query)
-        if facts:
-            parts.append("【相关记忆】\n" + "\n".join(f"- {f}" for f in facts))
-
-        summaries = self.short_term.get_recent(agent_id, conversation_id)
-        if summaries:
-            parts.append("【历史摘要】\n" + "\n".join(f"- {s}" for s in summaries))
-
-        return "\n\n".join(parts)
+        try:
+            parts: list[str] = []
+            facts = self.long_term.search(tenant_id, agent_id, query)
+            if facts:
+                parts.append("【相关记忆】\n" + "\n".join(f"- {f}" for f in facts))
+            summaries = self.short_term.get_recent(agent_id, conversation_id)
+            if summaries:
+                parts.append("【历史摘要】\n" + "\n".join(f"- {s}" for s in summaries))
+            return "\n\n".join(parts)
+        except Exception:
+            return ""

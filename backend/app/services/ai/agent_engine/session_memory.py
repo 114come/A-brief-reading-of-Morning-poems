@@ -57,16 +57,22 @@ class SessionMemory:
         name:
             Optional tool name (for tool role messages).
         """
-        message: dict[str, Any] = {"role": role, "content": content}
-        if name:
-            message["name"] = name
-        self._redis.rpush(_key(self.conversation_id), json.dumps(message, ensure_ascii=False))
-        self._redis.expire(_key(self.conversation_id), settings.AGENT_SESSION_TTL)
+        try:
+            message: dict[str, Any] = {"role": role, "content": content}
+            if name:
+                message["name"] = name
+            self._redis.rpush(_key(self.conversation_id), json.dumps(message, ensure_ascii=False))
+            self._redis.expire(_key(self.conversation_id), settings.AGENT_SESSION_TTL)
+        except Exception:
+            pass
 
     def get_history(self) -> list[dict[str, Any]]:
         """Return all messages in FIFO order as parsed dicts."""
-        raw = self._redis.lrange(_key(self.conversation_id), 0, -1)
-        return [json.loads(item) for item in raw]
+        try:
+            raw = self._redis.lrange(_key(self.conversation_id), 0, -1)
+            return [json.loads(item) for item in raw]
+        except Exception:
+            return []
 
     def clear(self) -> None:
         """Delete the entire session history for this conversation."""

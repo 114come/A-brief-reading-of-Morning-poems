@@ -12,6 +12,7 @@ from app.services.ai.knowledge_base.models import *  # noqa: F401,F403
 from app.services.ai.agent_engine.models import *  # noqa: F401,F403
 from app.services.ai.memory.models import *  # noqa: F401,F403
 from app.services.ai.workflow.models import *  # noqa: F401,F403
+from app.services.english.models import *  # noqa: F401,F403
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -46,6 +46,32 @@ async def get_current_user(
 UserDep = Annotated[User, Depends(get_current_user)]
 
 
+async def get_optional_user(
+    db: DbDep,
+    authorization: str | None = Header(default=None),
+) -> User | None:
+    """可选登录依赖：未携带/无效令牌时返回 None，供公开内容接口使用"""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization[7:]
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return None
+    user_id = payload.get("sub")
+    tenant_id = payload.get("tenant_id")
+    if not user_id or not tenant_id:
+        return None
+    user_repo = UserRepository(db)
+    user = user_repo.get_by_id(int(user_id))
+    if not user or user.tenant_id != int(tenant_id) or not user.is_active:
+        return None
+    return user
+
+
+OptionalUserDep = Annotated[User | None, Depends(get_optional_user)]
+
+
 def get_tenant_db(
     authorization: str | None = Header(default=None),
 ) -> Generator[Session, None, None]:

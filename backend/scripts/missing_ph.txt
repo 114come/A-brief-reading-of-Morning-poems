@@ -1,0 +1,17 @@
+== 缺音标分布 ==
+  ielts: 246
+  toefl: 109
+  gre: 75
+  high_school: 28
+  cet6: 22
+  cet4: 11
+  primary_school: 9
+  kaoyan: 7
+== kaoyan 缺音标抽样 ==
+  axe
+  cosy
+  credentials
+  cyberspace
+  emerging
+  laptop
+  muted
