@@ -6,6 +6,7 @@ import type {
   ArticleItem,
   Category,
   CheckinStats,
+  CollectResult,
   CollectionItem,
   CompleteResult,
   DailyReadingToday,
@@ -15,10 +16,12 @@ import type {
   ReadingArchiveItem,
   ReadingQuiz,
   RegisterResponse,
+  RewardOverview,
   SrsSessionState,
   SrsSettings,
   SrsState,
   SrsStats,
+  ShopItem,
   StudyStats,
   TestQuestions,
   TokenPair,
@@ -273,4 +276,31 @@ export function getCheckinStats(): Promise<CheckinStats> {
 
 export function getStudyStats(): Promise<StudyStats> {
   return request<StudyStats>('/english/study/stats')
+}
+
+// ── 奖励系统 ─────────────────────────────────────────────────────
+
+export function getRewardsOverview(): Promise<RewardOverview> {
+  return request<RewardOverview>('/rewards/overview')
+}
+
+export function getRewardsShop(): Promise<ShopItem[]> {
+  return request<ShopItem[]>('/rewards/shop')
+}
+
+export function collectRewards(): Promise<CollectResult> {
+  return request<CollectResult>('/rewards/collect', { method: 'POST' })
+}
+
+export function redeemReward(itemKey: string): Promise<ShopItem> {
+  return request<ShopItem>('/rewards/redeem', { method: 'POST', body: { item_key: itemKey } })
+}
+
+export function equipReward(
+  itemKey: string | null,
+): Promise<{ equipped_title: string | null; equipped_decor: string | null }> {
+  return request<{ equipped_title: string | null; equipped_decor: string | null }>('/rewards/equip', {
+    method: 'POST',
+    body: { item_key: itemKey },
+  })
 }

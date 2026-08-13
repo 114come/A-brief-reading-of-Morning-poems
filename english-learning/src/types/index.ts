@@ -321,3 +321,43 @@ export interface StudyStats {
   checkin_streak: number
   today_checkin: boolean
 }
+
+// ── 奖励系统 ─────────────────────────────────────────────────────
+export interface RewardTask {
+  key: string
+  name: string
+  desc: string
+  points: number
+  done: boolean
+  earned: boolean
+}
+
+export interface RewardOverview {
+  balance: number
+  total_earned: number
+  streak_days: number
+  today_earned: number
+  tasks: RewardTask[]
+  unlocked_keys: string[]
+  equipped_title: string | null
+  equipped_decor: string | null
+  quote: string
+  quote_source: string
+}
+
+export interface ShopItem {
+  item_key: string
+  name: string
+  desc: string
+  type: 'title' | 'decor' | 'egg'
+  price: number
+  is_unlocked: boolean
+}
+
+export interface CollectResult {
+  earned_total: number
+  tasks: RewardTask[]
+  milestones: string[]
+  message: string
+  quote: string
+}
