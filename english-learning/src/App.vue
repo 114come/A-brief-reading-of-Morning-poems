@@ -2,6 +2,7 @@
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import AmbientMusicPlayer from '@/components/AmbientMusicPlayer.vue'
 import LoginPromptModal from '@/components/LoginPromptModal.vue'
 import SyncPromptModal from '@/components/SyncPromptModal.vue'
 import DailySummaryFloatBtn from '@/components/DailySummaryFloatBtn.vue'
@@ -25,6 +26,7 @@ watch(
   <LoginPromptModal />
   <SyncPromptModal />
   <DailySummaryFloatBtn />
+  <AmbientMusicPlayer />
 
   <!-- 轻提示 -->
   <transition name="toast">
