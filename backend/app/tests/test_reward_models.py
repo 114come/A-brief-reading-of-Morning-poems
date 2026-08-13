@@ -3,6 +3,7 @@ from datetime import date
 
 import pytest
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base
@@ -42,5 +43,5 @@ def test_unique_user_points(db: Session) -> None:
     db.add(RewardUserPoints(user_id=1, balance=10, total_earned=10))
     db.commit()
     db.add(RewardUserPoints(user_id=1, balance=20, total_earned=20))
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         db.commit()

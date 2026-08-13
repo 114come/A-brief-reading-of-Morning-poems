@@ -132,9 +132,11 @@ class RewardService:
         milestones: list[str] = []
         for days, bonus in MILESTONES.items():
             reason = f"milestone_{days}"
-            if streak >= days and self._grant(user, bonus, reason, today, f"连续打卡 {days} 天"):
-                earned_total += bonus
-                milestones.append(reason)
+            # 里程碑一次性发放：历史任何一天发过就不再发（跨天幂等）
+            if streak >= days and not self.repo.has_point_log(user.id, reason):
+                if self._grant(user, bonus, reason, today, f"连续打卡 {days} 天"):
+                    earned_total += bonus
+                    milestones.append(reason)
 
         points = self.repo.get_points(user.id) or self.repo.create_points(user.id)
         message = self._warm_word(streak)

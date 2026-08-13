@@ -771,6 +771,15 @@ class EnglishRepository:
             .first()
         )
 
+    def has_point_log(self, user_id: int, reason: str) -> bool:
+        """该 reason 是否历史任何一天已发放过（里程碑跨天幂等）"""
+        return (
+            self.db.query(RewardPointLog)
+            .filter(RewardPointLog.user_id == user_id, RewardPointLog.reason == reason)
+            .first()
+            is not None
+        )
+
     def create_point_log(self, user_id: int, amount: int, reason: str, ref_date: date, note: str = "") -> RewardPointLog:
         item = RewardPointLog(
             user_id=user_id, amount=amount, reason=reason, ref_date=ref_date, note=note

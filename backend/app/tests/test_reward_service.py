@@ -3,6 +3,7 @@ from datetime import date, timedelta
 
 import pytest
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base
@@ -40,7 +41,7 @@ def test_point_log_unique(db: Session) -> None:
     repo = EnglishRepository(db)
     repo.create_point_log(1, 10, "checkin", date.today())
     # 唯一约束拦截：sqlite 对重复 (user, reason, ref_date) 抛 IntegrityError
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         repo.create_point_log(1, 10, "checkin", date.today())
     db.rollback()
     logs = repo.list_point_logs(1)
@@ -90,6 +91,31 @@ def test_collect_milestone(db: Session, user: User) -> None:
 
     svc.collect(user)  # 里程碑只发一次
     assert svc.overview(user).balance == 60
+
+
+def test_milestone_not_repeated_across_days(db: Session, user: User) -> None:
+    """连续打卡跨天后里程碑不重复发放（只发一次）"""
+    from app.services.english.models import RewardPointLog
+
+    for i in range(7, -1, -1):  # 连续 8 天（含今天），streak>=7 始终成立
+        _checkin(db, user.id, i)
+    svc = RewardService(db)
+    svc.collect(user)
+    assert svc.overview(user).balance == 10 + 50  # 今日打卡10 + 里程碑50
+
+    # 模拟"新的一天"：把 milestone_7 流水 ref_date 改到昨天，今天再 collect
+    log = (
+        db.query(RewardPointLog)
+        .filter(RewardPointLog.reason == "milestone_7")
+        .first()
+    )
+    assert log is not None
+    log.ref_date = date.today() - timedelta(days=1)
+    db.commit()
+
+    out = svc.collect(user)
+    assert "milestone_7" not in out.milestones  # 跨天不重复发放
+    assert svc.overview(user).balance == 60  # 10(今日打卡) + 50(里程碑仅一次)
 
 
 def test_redeem_and_equip(db: Session, user: User) -> None:
