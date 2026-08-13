@@ -107,3 +107,15 @@ def test_redeem_and_equip(db: Session, user: User) -> None:
     assert svc.overview(user).equipped_title == "title_juling"
     svc.equip(user, None)
     assert svc.overview(user).equipped_title is None
+
+
+def test_redeem_two_items_same_day(db: Session, user: User) -> None:
+    """同日兑换两件不同道具都成功，流水 reason 按道具区分"""
+    svc = RewardService(db)
+    svc._grant(user, 500, "checkin", date.today())
+    svc.redeem(user, "title_juling")
+    svc.redeem(user, "decor_pine_border")
+    ov = svc.overview(user)
+    assert ov.balance == 500 - 30 - 80
+    assert "title_juling" in ov.unlocked_keys
+    assert "decor_pine_border" in ov.unlocked_keys

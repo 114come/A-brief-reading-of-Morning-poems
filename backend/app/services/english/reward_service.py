@@ -104,7 +104,7 @@ class RewardService:
         points = self.repo.get_points(user.id) or self.repo.create_points(user.id)
         points.balance += amount
         points.total_earned += amount
-        self.db.commit()
+        self.db.flush()
         self.repo.create_point_log(user.id, amount, reason, ref_date, note)
         return True
 
@@ -212,8 +212,8 @@ class RewardService:
         if points.balance < item["price"]:
             raise ValidationException("积分不足，继续学习攒积分吧")
         points.balance -= item["price"]
-        self.db.commit()
-        self.repo.create_point_log(user.id, -item["price"], "redeem", date.today(), item["name"])
+        self.db.flush()
+        self.repo.create_point_log(user.id, -item["price"], f"redeem_{item_key}", date.today(), item["name"])
         self.repo.create_unlock(user.id, item_key)
         return ShopItemOut(
             item_key=item_key, name=item["name"], desc=item["desc"],
