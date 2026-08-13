@@ -10,6 +10,10 @@ from app.services.english.models import (
     EnglishWordBook,
     ReadingNote,
     ReadingWordBlacklist,
+    RewardPointLog,
+    RewardSettings,
+    RewardUnlock,
+    RewardUserPoints,
     UserCollection,
     UserDailyActivity,
     UserDailyReading,
@@ -740,3 +744,92 @@ class EnglishRepository:
     def remove_blacklist(self, item: ReadingWordBlacklist) -> None:
         self.db.delete(item)
         self.db.commit()
+
+    # ── 奖励系统 ─────────────────────────────────────────────────
+    def get_points(self, user_id: int) -> RewardUserPoints | None:
+        return (
+            self.db.query(RewardUserPoints)
+            .filter(RewardUserPoints.user_id == user_id)
+            .first()
+        )
+
+    def create_points(self, user_id: int, balance: int = 0) -> RewardUserPoints:
+        item = RewardUserPoints(user_id=user_id, balance=balance, total_earned=balance)
+        self.db.add(item)
+        self.db.commit()
+        self.db.refresh(item)
+        return item
+
+    def get_point_log(self, user_id: int, reason: str, ref_date: date) -> RewardPointLog | None:
+        return (
+            self.db.query(RewardPointLog)
+            .filter(
+                RewardPointLog.user_id == user_id,
+                RewardPointLog.reason == reason,
+                RewardPointLog.ref_date == ref_date,
+            )
+            .first()
+        )
+
+    def create_point_log(self, user_id: int, amount: int, reason: str, ref_date: date, note: str = "") -> RewardPointLog:
+        item = RewardPointLog(
+            user_id=user_id, amount=amount, reason=reason, ref_date=ref_date, note=note
+        )
+        self.db.add(item)
+        self.db.commit()
+        self.db.refresh(item)
+        return item
+
+    def list_point_logs(self, user_id: int, limit: int = 50) -> list[RewardPointLog]:
+        return (
+            self.db.query(RewardPointLog)
+            .filter(RewardPointLog.user_id == user_id)
+            .order_by(RewardPointLog.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def get_unlock(self, user_id: int, item_key: str) -> RewardUnlock | None:
+        return (
+            self.db.query(RewardUnlock)
+            .filter(RewardUnlock.user_id == user_id, RewardUnlock.item_key == item_key)
+            .first()
+        )
+
+    def list_unlocks(self, user_id: int) -> list[RewardUnlock]:
+        return (
+            self.db.query(RewardUnlock)
+            .filter(RewardUnlock.user_id == user_id)
+            .order_by(RewardUnlock.unlock_date.desc())
+            .all()
+        )
+
+    def create_unlock(self, user_id: int, item_key: str) -> RewardUnlock:
+        item = RewardUnlock(user_id=user_id, item_key=item_key)
+        self.db.add(item)
+        self.db.commit()
+        self.db.refresh(item)
+        return item
+
+    def get_reward_settings(self, user_id: int) -> RewardSettings | None:
+        return (
+            self.db.query(RewardSettings)
+            .filter(RewardSettings.user_id == user_id)
+            .first()
+        )
+
+    def create_reward_settings(self, user_id: int) -> RewardSettings:
+        item = RewardSettings(user_id=user_id)
+        self.db.add(item)
+        self.db.commit()
+        self.db.refresh(item)
+        return item
+
+    def sum_daily_words(self, user_id: int, study_date: date) -> int:
+        """今日背词数 = review_count + new_count 合计"""
+        rows = (
+            self.db.query(UserDailyStats)
+            .filter(UserDailyStats.user_id == user_id, UserDailyStats.study_date == study_date)
+            .all()
+        )
+        return sum((r.review_count or 0) + (r.new_count or 0) for r in rows)
