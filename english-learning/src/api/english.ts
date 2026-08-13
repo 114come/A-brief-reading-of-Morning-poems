@@ -281,25 +281,25 @@ export function getStudyStats(): Promise<StudyStats> {
 // ── 奖励系统 ─────────────────────────────────────────────────────
 
 export function getRewardsOverview(): Promise<RewardOverview> {
-  return request<RewardOverview>('/rewards/overview')
+  return request<RewardOverview>('/english/rewards/overview')
 }
 
 export function getRewardsShop(): Promise<ShopItem[]> {
-  return request<ShopItem[]>('/rewards/shop')
+  return request<ShopItem[]>('/english/rewards/shop')
 }
 
 export function collectRewards(): Promise<CollectResult> {
-  return request<CollectResult>('/rewards/collect', { method: 'POST' })
+  return request<CollectResult>('/english/rewards/collect', { method: 'POST' })
 }
 
 export function redeemReward(itemKey: string): Promise<ShopItem> {
-  return request<ShopItem>('/rewards/redeem', { method: 'POST', body: { item_key: itemKey } })
+  return request<ShopItem>('/english/rewards/redeem', { method: 'POST', body: { item_key: itemKey } })
 }
 
 export function equipReward(
   itemKey: string | null,
 ): Promise<{ equipped_title: string | null; equipped_decor: string | null }> {
-  return request<{ equipped_title: string | null; equipped_decor: string | null }>('/rewards/equip', {
+  return request<{ equipped_title: string | null; equipped_decor: string | null }>('/english/rewards/equip', {
     method: 'POST',
     body: { item_key: itemKey },
   })
