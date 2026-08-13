@@ -408,3 +408,73 @@ class UserDailySummary(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False
     )
+
+
+# ── 奖励系统 ──────────────────────────────────────────────────────
+
+
+class RewardUserPoints(Base):
+    """用户积分余额（每人一条）"""
+
+    __tablename__ = "reward_user_points"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_reward_user_points_user"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    balance: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    total_earned: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class RewardPointLog(Base):
+    """积分流水（到账为正、兑换为负；唯一约束防重复发放）"""
+
+    __tablename__ = "reward_point_logs"
+    __table_args__ = (
+        UniqueConstraint("user_id", "reason", "ref_date", name="uq_reward_logs_uid_reason_date"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[str] = mapped_column(String(30), nullable=False)
+    ref_date: Mapped[date] = mapped_column(Date, nullable=False)
+    note: Mapped[str] = mapped_column(String(100), default="", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
+
+
+class RewardUnlock(Base):
+    """已解锁奖励（称号/装饰/彩蛋）"""
+
+    __tablename__ = "reward_unlocks"
+    __table_args__ = (
+        UniqueConstraint("user_id", "item_key", name="uq_reward_unlocks_uid_item"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    item_key: Mapped[str] = mapped_column(String(50), nullable=False)
+    unlock_date: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
+
+
+class RewardSettings(Base):
+    """用户奖励设置（佩戴称号/装饰）"""
+
+    __tablename__ = "reward_settings"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_reward_settings_user"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    equipped_title: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    equipped_decor: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=func.now(), onupdate=func.now(), nullable=False
+    )
