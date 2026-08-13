@@ -3,9 +3,11 @@ import { computed, onMounted, ref } from 'vue'
 import { CheckCircle2 } from 'lucide-vue-next'
 import { checkin, getCheckinStats } from '@/api/english'
 import { useUiStore } from '@/stores/ui'
+import { useRewardsStore } from '@/stores/rewards'
 import type { CheckinStats } from '@/types'
 
 const ui = useUiStore()
+const rewards = useRewardsStore()
 const stats = ref<CheckinStats | null>(null)
 
 const weekdayNames = ['日', '一', '二', '三', '四', '五', '六']
@@ -38,10 +40,24 @@ const calendarDays = computed(() => {
 
 const todayIso = computed(() => new Date().toISOString().slice(0, 10))
 
+async function afterCheckin(): Promise<void> {
+  try {
+    const result = await rewards.collect()
+    if (result.earned_total > 0) {
+      ui.showToast(`奖励到账 +${result.earned_total} 分 · ${result.message}`)
+    } else if (result.milestones.length > 0) {
+      ui.showToast(`里程碑达成：${result.message}`)
+    }
+  } catch {
+    /* 奖励结算失败不阻塞打卡 */
+  }
+}
+
 async function doCheckin(): Promise<void> {
   try {
     stats.value = await checkin()
     ui.showToast('打卡成功，继续加油！')
+    await afterCheckin()
   } catch {
     ui.showToast('打卡失败')
   }

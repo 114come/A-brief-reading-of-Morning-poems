@@ -6,6 +6,8 @@ import AmbientMusicPlayer from '@/components/AmbientMusicPlayer.vue'
 import LoginPromptModal from '@/components/LoginPromptModal.vue'
 import SyncPromptModal from '@/components/SyncPromptModal.vue'
 import DailySummaryFloatBtn from '@/components/DailySummaryFloatBtn.vue'
+import PointToast from '@/components/PointToast.vue'
+import RewardCelebrationModal from '@/components/RewardCelebrationModal.vue'
 import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
@@ -27,6 +29,8 @@ watch(
   <SyncPromptModal />
   <DailySummaryFloatBtn />
   <AmbientMusicPlayer />
+  <PointToast />
+  <RewardCelebrationModal />
 
   <!-- 轻提示 -->
   <transition name="toast">

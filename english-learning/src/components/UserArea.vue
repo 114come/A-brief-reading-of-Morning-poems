@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useRewardsStore } from '@/stores/rewards'
+import { TITLE_META } from '@/constants/titles'
 
 const auth = useAuthStore()
+const rewards = useRewardsStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -19,6 +22,17 @@ const avatarText = computed(() => {
 })
 
 const displayName = computed(() => auth.user?.nickname || auth.user?.username || '')
+
+const titleName = computed(() => {
+  const key = rewards.overview?.equipped_title
+  return key ? TITLE_META[key] || key : ''
+})
+
+onMounted(() => {
+  if (auth.isLoggedIn) {
+    rewards.loadOverview().catch(() => {})
+  }
+})
 
 const menuItems = [
   { label: '我的生词本', to: '/word/notebook', dividerBefore: false },
@@ -88,6 +102,7 @@ onBeforeUnmount(() => {
           <span v-else>{{ avatarText }}</span>
         </span>
         <span class="nickname">{{ displayName }}</span>
+        <span v-if="titleName" class="user-title">{{ titleName }}</span>
         <ChevronDown
           class="caret"
           :class="{ flip: open }"
@@ -175,6 +190,22 @@ onBeforeUnmount(() => {
   height: 14px;
   color: var(--text-3);
   transition: transform 0.2s ease;
+}
+
+.user-title {
+  font-size: 11px;
+  color: var(--sun);
+  border: 1px solid var(--sun-soft);
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: var(--sun-soft);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .user-title {
+    display: none;
+  }
 }
 
 .caret.flip {

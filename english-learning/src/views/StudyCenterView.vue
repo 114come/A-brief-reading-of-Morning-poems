@@ -7,17 +7,19 @@ import type { StudyStats } from '@/types'
 import PageTabs from '@/components/PageTabs.vue'
 import CheckinPane from '@/components/CheckinPane.vue'
 import DailySummaryPane from '@/components/DailySummaryPane.vue'
+import RewardsPane from '@/components/RewardsPane.vue'
 
 const ui = useUiStore()
 const route = useRoute()
 
 // 支持 ?tab=summary 直达
 const initialTab = route.query.tab as string | undefined
-const activeTab = ref(initialTab && ['checkin', 'overview', 'summary'].includes(initialTab) ? initialTab : 'checkin')
+const activeTab = ref(initialTab && ['checkin', 'overview', 'summary', 'rewards'].includes(initialTab) ? initialTab : 'checkin')
 const tabs = [
   { key: 'checkin', label: '每日打卡', requiresLogin: true },
   { key: 'overview', label: '学习数据总览', requiresLogin: true },
   { key: 'summary', label: 'AI 学习日报', requiresLogin: true },
+  { key: 'rewards', label: '奖励', requiresLogin: true },
 ]
 
 const loading = ref(false)
@@ -65,6 +67,7 @@ onMounted(() => {
 
     <CheckinPane v-if="activeTab === 'checkin'" />
     <DailySummaryPane v-else-if="activeTab === 'summary'" />
+    <RewardsPane v-else-if="activeTab === 'rewards'" />
 
     <div v-else>
       <div v-if="loading" class="empty">加载中…</div>
