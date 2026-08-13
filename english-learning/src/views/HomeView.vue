@@ -90,11 +90,28 @@ onMounted(async () => {
 <style scoped>
 /* ── Hero ── */
 .hero {
-  padding: 72px 40px 64px;
+  position: relative;
+  overflow: hidden;
+  padding: 76px 40px 66px;
   text-align: center;
-  background: linear-gradient(180deg, var(--primary-soft), transparent 70%);
+  background: var(--sunrise-glow),
+    linear-gradient(180deg, var(--primary-soft), transparent 72%);
   border-radius: var(--radius-xl);
   border: 1px solid var(--border);
+}
+
+/* 晨光弧线：hero 顶部一道柔和的金色地平线 */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--sun), transparent);
+  opacity: 0.7;
 }
 
 .hero-rule {
@@ -115,9 +132,10 @@ onMounted(async () => {
 }
 
 .hero-title {
+  font-family: var(--font-display);
   font-size: var(--fs-hero);
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   line-height: 1.25;
 }
 
@@ -169,7 +187,7 @@ onMounted(async () => {
 
 .tone-accent {
   background: var(--accent-soft);
-  color: var(--primary);
+  color: var(--accent);
 }
 
 .tone-sage {

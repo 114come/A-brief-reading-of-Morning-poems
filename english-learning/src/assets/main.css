@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════
-   朝词浅阅 · Swiss Spa 设计系统
-   松柏绿品牌色 · 纯白/暖灰背景 · 无衬线 · 克制高级
+   朝词浅阅 · 晨光森林设计系统
+   青竹绿为骨 · 晨光金为暖 · 天光蓝为明
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── 设计令牌：间距 / 字号 / 圆角 / 过渡 ─────────────────────── */
@@ -32,81 +32,101 @@
   --fs-3xl: 32px;
   --fs-hero: 40px;
 
-  /* 圆角 */
-  --radius: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* 圆角（晨光森林 · 更柔和的现代感） */
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
 
   /* 过渡 */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --t-fast: 0.18s var(--ease);
   --t-base: 0.25s var(--ease);
   --t-theme: 0.3s var(--ease);
+
+  /* 显示字体（衬线，书卷气标题 / 字标） */
+  --font-display: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
 }
 
-/* ── 设计令牌：浅色主题（默认） ───────────────────────────────── */
+/* ── 设计令牌：浅色主题「晨光」 ──────────────────────────────── */
 :root {
-  /* 品牌色（≤3）：松柏绿 / 雾灰绿 / 浅苔绿 */
-  --primary: #2f4a3c;
-  --primary-2: #243a2f;
-  --primary-soft: rgba(47, 74, 60, 0.1);
-  --accent: #7a8b7e;
-  --accent-soft: rgba(122, 139, 126, 0.14);
-  --sage: #a8b5a0;
+  /* 品牌色：青竹绿 / 天光蓝 / 晨光金（金为签名暖色，小面积用） */
+  --primary: #3d8f63;
+  --primary-2: #2f7450;
+  --primary-soft: rgba(61, 143, 99, 0.1);
+  --accent: #5b93be;
+  --accent-soft: rgba(91, 147, 190, 0.12);
+  --sun: #d9a44b;
+  --sun-soft: rgba(217, 164, 75, 0.14);
+  --sage: #a9c5ae;
 
   /* 语义色 */
-  --success: #3e7a54;
-  --success-soft: rgba(62, 122, 84, 0.12);
-  --danger: #b4533b;
-  --danger-soft: rgba(180, 83, 59, 0.1);
+  --success: #3e9b6b;
+  --success-soft: rgba(62, 155, 107, 0.12);
+  --danger: #c25e4b;
+  --danger-soft: rgba(194, 94, 75, 0.1);
 
-  /* 表面 / 背景（仅纯白 / 暖灰） */
-  --bg: #f6f5f2;
-  --bg-soft: #efeee9;
+  /* 表面 / 背景：晨白 / 晨雾 / 纯白 */
+  --bg: #f5f8f4;
+  --bg-soft: #ecf1eb;
   --surface: #ffffff;
-  --surface-2: #f7f6f3;
-  --text: #1c1c1a;
-  --text-2: #5f6059;
-  --text-3: #a2a39b;
-  --border: #e6e4de;
-  --border-2: #d6d4cc;
+  --surface-2: #f4f7f2;
+  --text: #202b25;
+  --text-2: #5a6b60;
+  --text-3: #97a69a;
+  --border: #e2e9e1;
+  --border-2: #ccd8cc;
 
-  /* 阴影（柔、扩散、低对比） */
-  --shadow-sm: 0 1px 2px rgba(28, 28, 26, 0.04);
-  --shadow: 0 8px 30px rgba(28, 28, 26, 0.06);
-  --shadow-lg: 0 24px 60px rgba(28, 28, 26, 0.1);
+  /* 阴影（柔、扩散、低对比，带一丝绿调） */
+  --shadow-sm: 0 1px 2px rgba(32, 43, 37, 0.05);
+  --shadow: 0 10px 32px rgba(32, 43, 37, 0.07);
+  --shadow-lg: 0 28px 64px rgba(32, 43, 37, 0.12);
 
-  /* 品牌渐变（统一替换旧紫色渐变） */
-  --brand-gradient: linear-gradient(135deg, var(--primary), var(--accent));
+  /* 晨光渐变（绿 → 金）与晨光光晕（首页 hero 氛围用） */
+  --brand-gradient: linear-gradient(120deg, var(--primary) 0%, var(--sun) 100%);
+  --sunrise-glow: radial-gradient(
+    80% 120% at 50% -20%,
+    rgba(217, 164, 75, 0.16) 0%,
+    rgba(61, 143, 99, 0.1) 45%,
+    transparent 70%
+  );
 }
 
-/* ── 设计令牌：深色主题（同品牌墨绿） ─────────────────────────── */
+/* ── 设计令牌：深色主题「森林夜」 ─────────────────────────────── */
 [data-theme='dark'] {
-  --primary: #7fa18c;
-  --primary-2: #97b39f;
-  --primary-soft: rgba(127, 161, 140, 0.16);
-  --accent: #9aa99e;
-  --accent-soft: rgba(154, 169, 158, 0.16);
-  --sage: #5d6b60;
+  --primary: #74c398;
+  --primary-2: #92d4af;
+  --primary-soft: rgba(116, 195, 152, 0.16);
+  --accent: #86b4dc;
+  --accent-soft: rgba(134, 180, 220, 0.16);
+  --sun: #ddb86a;
+  --sun-soft: rgba(221, 184, 106, 0.16);
+  --sage: #5d7a66;
 
-  --success: #6fb28a;
-  --success-soft: rgba(111, 178, 138, 0.14);
-  --danger: #d0886c;
-  --danger-soft: rgba(208, 136, 108, 0.14);
+  --success: #6fb58a;
+  --success-soft: rgba(111, 181, 138, 0.14);
+  --danger: #d18068;
+  --danger-soft: rgba(209, 128, 104, 0.14);
 
-  --bg: #141613;
-  --bg-soft: #1b1e1a;
-  --surface: #1e211d;
-  --surface-2: #262a25;
-  --text: #ecebe6;
-  --text-2: #a6a89f;
-  --text-3: #6c6e65;
-  --border: #2c2f29;
-  --border-2: #3a3e36;
+  --bg: #131b16;
+  --bg-soft: #1a251e;
+  --surface: #1d2821;
+  --surface-2: #26332a;
+  --text: #e7efe9;
+  --text-2: #a2b3a6;
+  --text-3: #6b7b6f;
+  --border: #2a3a30;
+  --border-2: #3a4d41;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 28px 64px rgba(0, 0, 0, 0.55);
+
+  --sunrise-glow: radial-gradient(
+    80% 120% at 50% -20%,
+    rgba(221, 184, 106, 0.1) 0%,
+    rgba(116, 195, 152, 0.08) 45%,
+    transparent 70%
+  );
 }
 
 /* ── Reset & 基础 ─────────────────────────────────────────────── */
@@ -123,8 +143,9 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Roboto, Helvetica,
+    Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.7;
@@ -132,6 +153,11 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   transition: background-color var(--t-theme), color var(--t-theme);
+}
+
+/* 衬线显示字体（标题 / 字标） */
+.font-display {
+  font-family: var(--font-display);
 }
 
 a {
@@ -189,9 +215,10 @@ select {
 }
 
 .page-title {
+  font-family: var(--font-display);
   font-size: var(--fs-2xl);
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
 .page-desc {
@@ -240,8 +267,9 @@ select {
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
   color: #fff;
+  box-shadow: 0 4px 12px var(--primary-soft);
 }
 
 .btn-primary:hover:not(:disabled) {

@@ -131,18 +131,19 @@ function closePanel(): void {
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  background: var(--primary);
+  background: var(--brand-gradient);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 10px var(--primary-soft);
+  box-shadow: 0 3px 10px var(--sun-soft);
 }
 
 .logo-text {
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
 }
 
 /* 主导航 */
@@ -178,7 +179,7 @@ function closePanel(): void {
   bottom: 2px;
   height: 2px;
   border-radius: 999px;
-  background: var(--primary);
+  background: var(--brand-gradient);
 }
 
 /* 留白 */
