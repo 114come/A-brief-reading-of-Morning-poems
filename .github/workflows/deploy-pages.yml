@@ -1,0 +1,68 @@
+# 朝词浅阅 · GitHub Pages 自动部署
+#
+# 每次 push 到 main 分支（或手动触发）时：
+#   1. 构建前端（english-learning/，VITE_BASE 指向子路径 /english-learning/）
+#   2. 生成 SPA 回退页 404.html（前端路由为 history 模式）
+#   3. 上传产物并部署到 GitHub Pages
+#
+# 注意：GitHub Pages 仅托管静态前端；后端 API（FastAPI + MySQL）不在 Pages 上运行。
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: english-learning
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: english-learning/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_BASE: /english-learning/
+
+      - name: Add SPA fallback (404.html -> index.html)
+        run: cp dist/index.html dist/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: english-learning/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
