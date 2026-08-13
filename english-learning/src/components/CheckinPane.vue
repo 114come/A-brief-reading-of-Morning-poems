@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, ref } from 'vue'
+import type { Ref } from 'vue'
 import { CheckCircle2 } from 'lucide-vue-next'
 import { checkin, getCheckinStats } from '@/api/english'
 import { useUiStore } from '@/stores/ui'
 import { useRewardsStore } from '@/stores/rewards'
 import type { CheckinStats } from '@/types'
+import type PointToast from './PointToast.vue'
+import type RewardCelebrationModal from './RewardCelebrationModal.vue'
 
 const ui = useUiStore()
 const rewards = useRewardsStore()
 const stats = ref<CheckinStats | null>(null)
+
+const pointToast = inject<Ref<InstanceType<typeof PointToast> | null> | undefined>('pointToast')
+const celebrationModal = inject<Ref<InstanceType<typeof RewardCelebrationModal> | null> | undefined>('celebrationModal')
+
+const MILESTONE_LABELS: Record<string, string> = {
+  milestone_7: '习惯正在发芽',
+  milestone_30: '你已走出一条路',
+  milestone_100: '百日铸就晨读人',
+}
 
 const weekdayNames = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -45,8 +57,14 @@ async function afterCheckin(): Promise<void> {
     const result = await rewards.collect()
     if (result.earned_total > 0) {
       ui.showToast(`奖励到账 +${result.earned_total} 分 · ${result.message}`)
-    } else if (result.milestones.length > 0) {
-      ui.showToast(`里程碑达成：${result.message}`)
+      pointToast?.value?.show(result.earned_total, result.message)
+    }
+    if (result.milestones.length > 0) {
+      const m = result.milestones[0]!
+      celebrationModal?.value?.show(
+        MILESTONE_LABELS[m] || '里程碑达成',
+        `${result.message} · 额外奖励已到账，去奖励站看看吧`,
+      )
     }
   } catch {
     /* 奖励结算失败不阻塞打卡 */

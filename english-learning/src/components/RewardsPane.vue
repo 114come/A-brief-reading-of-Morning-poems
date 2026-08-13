@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, ref } from 'vue'
+import type { Ref } from 'vue'
 import { Coins, Gift, Medal } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useRewardsStore } from '@/stores/rewards'
 import DailyQuote from './DailyQuote.vue'
+import type RewardCelebrationModal from './RewardCelebrationModal.vue'
 import type { ShopItem } from '@/types'
 
 const auth = useAuthStore()
@@ -11,11 +13,18 @@ const store = useRewardsStore()
 const activeTab = ref<'tasks' | 'shop'>('tasks')
 const shopType = ref<'title' | 'decor' | 'egg'>('title')
 
+const celebrationModal = inject<Ref<InstanceType<typeof RewardCelebrationModal> | null> | undefined>('celebrationModal')
+
 const shopItems = computed(() => store.shop.filter((i) => i.type === shopType.value))
 
 async function onEquip(item: ShopItem): Promise<void> {
   const current = store.overview?.equipped_title
   await store.equip(current === item.item_key ? null : item.item_key)
+}
+
+async function onRedeem(item: ShopItem): Promise<void> {
+  await store.redeem(item.item_key)
+  celebrationModal?.value?.show(`解锁 · ${item.name}`, `${item.desc} · 花费 ${item.price} 分`)
 }
 
 onMounted(() => {
@@ -100,10 +109,10 @@ onMounted(() => {
               >
                 {{ store.overview.equipped_title === item.item_key ? '佩戴中' : '佩戴' }}
               </button>
-              <button v-else class="btn btn-primary btn-sm" type="button" @click="store.redeem(item.item_key)">兑换</button>
+              <button v-else class="btn btn-primary btn-sm" type="button" @click="onRedeem(item)">兑换</button>
             </template>
             <span v-else-if="item.is_unlocked" class="tag tag-success">已解锁</span>
-            <button v-else class="btn btn-primary btn-sm" type="button" @click="store.redeem(item.item_key)">兑换</button>
+            <button v-else class="btn btn-primary btn-sm" type="button" @click="onRedeem(item)">兑换</button>
           </div>
         </div>
       </div>

@@ -38,5 +38,10 @@ export const useRewardsStore = defineStore('rewards', () => {
     await loadOverview()
   }
 
-  return { overview, shop, loading, loadOverview, loadShop, collect, redeem, equip }
+  function reset() {
+    overview.value = null
+    shop.value = []
+  }
+
+  return { overview, shop, loading, loadOverview, loadShop, collect, redeem, equip, reset }
 })

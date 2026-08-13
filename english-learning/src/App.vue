@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { provide, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AmbientMusicPlayer from '@/components/AmbientMusicPlayer.vue'
@@ -12,6 +12,12 @@ import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
 const ui = useUiStore()
+
+// 暴露两个浮层实例，供打卡/兑换后触发庆祝与积分到账
+const pointToast = ref<InstanceType<typeof PointToast> | null>(null)
+const celebrationModal = ref<InstanceType<typeof RewardCelebrationModal> | null>(null)
+provide('pointToast', pointToast)
+provide('celebrationModal', celebrationModal)
 
 // 路由切换回到顶部
 watch(
@@ -29,8 +35,8 @@ watch(
   <SyncPromptModal />
   <DailySummaryFloatBtn />
   <AmbientMusicPlayer />
-  <PointToast />
-  <RewardCelebrationModal />
+  <PointToast ref="pointToast" />
+  <RewardCelebrationModal ref="celebrationModal" />
 
   <!-- 轻提示 -->
   <transition name="toast">

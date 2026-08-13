@@ -34,6 +34,15 @@ onMounted(() => {
   }
 })
 
+// 登录态切换：登出清空称号/积分数据，重新登录重新加载，避免串号残留
+watch(
+  () => auth.isLoggedIn,
+  (loggedIn) => {
+    if (loggedIn) rewards.loadOverview().catch(() => {})
+    else rewards.reset()
+  },
+)
+
 const menuItems = [
   { label: '我的生词本', to: '/word/notebook', dividerBefore: false },
   { label: '我的收藏', to: '/collect', dividerBefore: false },
