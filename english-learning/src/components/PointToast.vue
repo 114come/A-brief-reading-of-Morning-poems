@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
 import { Sparkles } from 'lucide-vue-next'
 
 const visible = ref(false)
@@ -14,6 +14,10 @@ function show(earned: number, msg: string): void {
   if (timer) clearTimeout(timer)
   timer = setTimeout(() => (visible.value = false), 2600)
 }
+
+onUnmounted(() => {
+  if (timer) clearTimeout(timer)
+})
 
 defineExpose({ show })
 </script>

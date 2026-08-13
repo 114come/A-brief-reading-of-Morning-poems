@@ -11,15 +11,6 @@ const store = useRewardsStore()
 const activeTab = ref<'tasks' | 'shop'>('tasks')
 const shopType = ref<'title' | 'decor' | 'egg'>('title')
 
-const TITLE_META: Record<string, string> = {
-  title_juling: '聚灵',
-  title_qiming: '启明',
-  title_yunfeng: '蕴锋',
-  title_chengguang: '承光',
-  title_yufeng: '御风',
-  title_guanxing: '观星',
-}
-
 const shopItems = computed(() => store.shop.filter((i) => i.type === shopType.value))
 
 async function onEquip(item: ShopItem): Promise<void> {
@@ -109,7 +100,7 @@ onMounted(() => {
               >
                 {{ store.overview.equipped_title === item.item_key ? '佩戴中' : '佩戴' }}
               </button>
-              <span v-else class="tag tag-primary">已拥有</span>
+              <button v-else class="btn btn-primary btn-sm" type="button" @click="store.redeem(item.item_key)">兑换</button>
             </template>
             <span v-else-if="item.is_unlocked" class="tag tag-success">已解锁</span>
             <button v-else class="btn btn-primary btn-sm" type="button" @click="store.redeem(item.item_key)">兑换</button>
