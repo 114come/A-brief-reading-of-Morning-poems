@@ -19,6 +19,7 @@ from app.services.english.schemas import (
     ArticleOut,
     CategoryOut,
     CheckinStatsOut,
+    CollectOut,
     CollectionCreate,
     CollectionItemOut,
     CompleteIn,
@@ -26,12 +27,14 @@ from app.services.english.schemas import (
     DailyReadingRecordOut,
     DailyReadingTodayOut,
     DailySummaryOut,
+    EquipIn,
     NoteCreate,
     NoteOut,
     NoteUpdate,
     OnboardingIn,
     ProfileOut,
     ProfileUpdate,
+    RedeemIn,
     ReadingArchiveItemOut,
     ReadingBlacklistIn,
     ReadingCompleteIn,
@@ -42,7 +45,9 @@ from app.services.english.schemas import (
 
     RegisterRequest,
     ResetIn,
+    RewardOverviewOut,
     SetTagIn,
+    ShopItemOut,
     SrsSettingsOut,
     SrsStateIn,
     SrsStateOut,
@@ -62,6 +67,7 @@ from app.services.english.srs_service import SrsService
 from app.services.english.test_service import TestService
 from app.services.english.daily_summary_service import DailySummaryService
 from app.services.english.daily_reading_service import DailyReadingService
+from app.services.english.reward_service import RewardService
 
 router = APIRouter(prefix="/english", tags=["英语学习"])
 
@@ -392,3 +398,31 @@ def checkin_stats(user: UserDep, db: DbDep) -> UnifiedResponse[CheckinStatsOut]:
 @router.get("/study/stats", response_model=UnifiedResponse[StudyStatsOut])
 def study_stats(user: UserDep, db: DbDep) -> UnifiedResponse[StudyStatsOut]:
     return UnifiedResponse.success(data=_service(db).study_stats(user))
+
+
+# ── 奖励系统 ──────────────────────────────────────────────────────
+
+
+@router.get("/rewards/overview", response_model=UnifiedResponse[RewardOverviewOut])
+def rewards_overview(user: UserDep, db: DbDep) -> UnifiedResponse[RewardOverviewOut]:
+    return UnifiedResponse.success(data=RewardService(db).overview(user))
+
+
+@router.get("/rewards/shop", response_model=UnifiedResponse[list[ShopItemOut]])
+def rewards_shop(user: UserDep, db: DbDep) -> UnifiedResponse[list[ShopItemOut]]:
+    return UnifiedResponse.success(data=RewardService(db).shop(user))
+
+
+@router.post("/rewards/collect", response_model=UnifiedResponse[CollectOut])
+def rewards_collect(user: UserDep, db: DbDep) -> UnifiedResponse[CollectOut]:
+    return UnifiedResponse.success(data=RewardService(db).collect(user), message="奖励结算完成")
+
+
+@router.post("/rewards/redeem", response_model=UnifiedResponse[ShopItemOut])
+def rewards_redeem(data: RedeemIn, user: UserDep, db: DbDep) -> UnifiedResponse[ShopItemOut]:
+    return UnifiedResponse.success(data=RewardService(db).redeem(user, data.item_key), message="兑换成功")
+
+
+@router.post("/rewards/equip", response_model=UnifiedResponse[dict])
+def rewards_equip(data: EquipIn, user: UserDep, db: DbDep) -> UnifiedResponse[dict]:
+    return UnifiedResponse.success(data=RewardService(db).equip(user, data.item_key))
