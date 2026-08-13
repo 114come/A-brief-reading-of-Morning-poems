@@ -44,7 +44,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_BASE: /english-learning/
+          VITE_BASE: /A-brief-reading-of-Morning-poems/
 
       - name: Add SPA fallback (404.html -> index.html)
         run: cp dist/index.html dist/404.html
