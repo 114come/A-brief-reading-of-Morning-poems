@@ -425,3 +425,53 @@ class StudyStatsOut(BaseModel):
     checkin_total: int
     checkin_streak: int
     today_checkin: bool
+
+
+# ─── 奖励系统 ───────────────────────────────────────────────────────
+
+
+class RewardTaskOut(BaseModel):
+    key: str
+    name: str
+    desc: str
+    points: int
+    done: bool = False
+    earned: bool = False  # 今日是否已结算该任务积分
+
+
+class RewardOverviewOut(BaseModel):
+    balance: int
+    total_earned: int
+    streak_days: int
+    today_earned: int
+    tasks: list[RewardTaskOut]
+    unlocked_keys: list[str]
+    equipped_title: str | None = None
+    equipped_decor: str | None = None
+    quote: str
+    quote_source: str
+
+
+class ShopItemOut(BaseModel):
+    item_key: str
+    name: str
+    desc: str
+    type: str  # title / decor / egg
+    price: int
+    is_unlocked: bool = False
+
+
+class RedeemIn(BaseModel):
+    item_key: str
+
+
+class EquipIn(BaseModel):
+    item_key: str | None = None  # None 表示卸下
+
+
+class CollectOut(BaseModel):
+    earned_total: int
+    tasks: list[RewardTaskOut]
+    milestones: list[str] = []
+    message: str
+    quote: str
