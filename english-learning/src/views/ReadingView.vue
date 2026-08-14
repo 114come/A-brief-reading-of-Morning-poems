@@ -25,6 +25,7 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { useDailySummaryStore } from '@/stores/dailySummary'
 import { useUiStore } from '@/stores/ui'
+import { useRewardCollect } from '@/composables/rewardCollect'
 import { TTS_RATES, useTts } from '@/composables/useTts'
 import type { Article, DailyReadingToday, ReadingArchiveItem } from '@/types'
 import { READING_LEVEL_LABEL, READING_TOPIC_LABEL } from '@/types'
@@ -180,6 +181,7 @@ async function saveNote(): Promise<void> {
 
 // ── 完成打卡 ────────────────────────────────────────────────────
 const completing = ref(false)
+const { collectAndNotify } = useRewardCollect()
 async function completeReading(): Promise<void> {
   if (!article.value) return
   completing.value = true
@@ -188,6 +190,8 @@ async function completeReading(): Promise<void> {
     stopReadTimer()
     ui.showToast('今日一读打卡成功')
     await loadToday()
+    // 结算当日奖励积分（浅读任务，幂等；仅登录用户生效）
+    await collectAndNotify()
   } catch (e) {
     ui.showToast((e as Error).message || '打卡失败')
   } finally {

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { addWordbook, listBooks, listWords, saveSrsState } from '@/api/english'
+import { collectQuiet } from '@/composables/rewardCollect'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useOnboardingStore } from '@/stores/onboarding'
@@ -307,6 +308,9 @@ export const useSrsStore = defineStore('srs', () => {
     if (!auth.isLoggedIn) {
       // 游客：本地打卡已写，完成后提示登录同步
       ui.showToast('今日学习完成！登录可同步并保存打卡')
+    } else {
+      // 登录用户：结算当日奖励积分（背词任务，幂等）
+      await collectQuiet()
     }
   }
 

@@ -1,21 +1,38 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue'
 import type { Ref } from 'vue'
-import { Coins, Gift, Medal } from 'lucide-vue-next'
+import { Coins, Gift, Medal, Sparkles } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useRewardsStore } from '@/stores/rewards'
+import { useRewardCollect } from '@/composables/rewardCollect'
 import DailyQuote from './DailyQuote.vue'
 import type RewardCelebrationModal from './RewardCelebrationModal.vue'
 import type { ShopItem } from '@/types'
 
 const auth = useAuthStore()
 const store = useRewardsStore()
+const { collectAndNotify } = useRewardCollect()
 const activeTab = ref<'tasks' | 'shop'>('tasks')
 const shopType = ref<'title' | 'decor' | 'egg'>('title')
 
 const celebrationModal = inject<Ref<InstanceType<typeof RewardCelebrationModal> | null> | undefined>('celebrationModal')
 
 const shopItems = computed(() => store.shop.filter((i) => i.type === shopType.value))
+
+const hasUnclaimed = computed(() => store.overview?.tasks.some((t) => t.done && !t.earned) ?? false)
+
+const claiming = ref(false)
+
+async function onClaim(): Promise<void> {
+  if (claiming.value) return
+  claiming.value = true
+  try {
+    await collectAndNotify()
+    await store.loadOverview()
+  } finally {
+    claiming.value = false
+  }
+}
 
 async function onEquip(item: ShopItem): Promise<void> {
   const current = store.overview?.equipped_title
@@ -84,7 +101,17 @@ onMounted(() => {
           <span v-else-if="t.done" class="tag">待领取</span>
         </div>
       </div>
-      <p class="task-hint">完成任务后积分自动到账 · 每天 0 点重置</p>
+      <button
+        v-if="hasUnclaimed"
+        class="btn btn-primary claim-btn"
+        type="button"
+        :disabled="claiming"
+        @click="onClaim"
+      >
+        <Sparkles :size="15" :stroke-width="1.8" />
+        {{ claiming ? '领取中…' : '一键领取全部奖励' }}
+      </button>
+      <p class="task-hint">完成任务后点此领取 · 完成学习行为也会自动到账 · 每天 0 点重置</p>
     </section>
 
     <!-- 兑换站 -->
@@ -230,6 +257,11 @@ onMounted(() => {
   font-size: var(--fs-xs);
   color: var(--text-3);
   text-align: center;
+}
+
+.claim-btn {
+  align-self: center;
+  margin-top: 4px;
 }
 
 /* 兑换站 */

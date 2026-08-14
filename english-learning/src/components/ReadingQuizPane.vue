@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { getReadingQuiz, submitReadingQuiz } from '@/api/english'
+import { useRewardCollect } from '@/composables/rewardCollect'
 import { useUiStore } from '@/stores/ui'
 import type { ReadingQuizQuestion } from '@/types'
 import McQuestion from './test/McQuestion.vue'
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const ui = useUiStore()
+const { collectAndNotify } = useRewardCollect()
 
 type Phase = 'idle' | 'loading' | 'quiz' | 'done'
 const phase = ref<Phase>('idle')
@@ -81,6 +83,8 @@ async function submit(): Promise<void> {
     result.value = { correct: res.correct, total: res.total }
     phase.value = 'done'
     emit('done')
+    // 结算当日奖励积分（小测及格任务，幂等；后端按正确率判定达标）
+    await collectAndNotify()
   } catch (e) {
     ui.showToast((e as Error).message || '提交失败')
     // 恢复作答态，允许重试
